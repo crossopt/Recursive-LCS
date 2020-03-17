@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.10) # Проверка версии CMake
+project(Recursive-LCS)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Werror -pedantic -pthread")
+
+set(SOURCES
+    src/monge_matrix.cpp
+)
+
+include_directories(inc/)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+include_directories(${Boost_INCLUDE_DIRS})
+
+add_library(llcs STATIC ${SOURCES})
+target_link_libraries(llcs ${Boost_LIBRARIES})
+add_executable(lcs main.cpp)
+target_link_libraries(lcs llcs)
+
+#GTest
+enable_testing()
+include(GoogleTest)
+add_subdirectory(google_test)
+
+set(TEST_SOURCES
+    test/main.cpp
+    test/test_monge_matrix.cpp
+)
+
+add_executable(lcs_test ${TEST_SOURCES})
+target_link_libraries(lcs_test llcs gtest gtest_main)
+add_test(NAME lcs_test COMMAND lcs_test)
