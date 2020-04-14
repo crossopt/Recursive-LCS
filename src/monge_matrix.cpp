@@ -103,23 +103,39 @@ SubpermutationMatrix Permutation::expand(unsigned rows, unsigned cols) const {
     return SubpermutationMatrix{rows, cols, subpermutation};
 }
 
-unsigned Permutation::get_row_split_index() const {
-    return row_view[(row_view.size() - 1) / 2].first;
-}
-
-unsigned Permutation::get_col_split_index() const {
-    return col_view[(col_view.size() - 1) / 2].first;
-}
-
 std::vector <std::pair<unsigned, unsigned>> Permutation::get_row_view() const {
     return row_view;
+}
+
+std::pair<Permutation, Permutation> Permutation::split_row() const {
+    unsigned split_value = row_view[(row_view.size() - 1) / 2].first;
+    std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
+    std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
+    for (const auto &matched_pair: row_view) {
+        if (matched_pair.first <= split_value) {
+            row_first.push_back(matched_pair);
+        }
+        if (matched_pair.first > split_value) {
+            row_second.push_back(matched_pair);
+        }
+    }
+    for (const auto &matched_pair: col_view) {
+        if (matched_pair.second <= split_value) {
+            col_first.push_back(matched_pair);
+        }
+        if (matched_pair.second > split_value) {
+            col_second.push_back(matched_pair);
+        }
+    }
+    return {Permutation{row_first, col_first}, Permutation{row_second, col_second}};
 }
 
 std::vector <std::pair<unsigned, unsigned>> Permutation::get_col_view() const {
     return col_view;
 }
 
-std::pair<Permutation, Permutation> Permutation::split_col(unsigned split_value) const {
+std::pair<Permutation, Permutation> Permutation::split_col() const {
+    unsigned split_value = col_view[(col_view.size() - 1) / 2].first;
     std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
     std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
     for (const auto &matched_pair: row_view) {
@@ -141,32 +157,186 @@ std::pair<Permutation, Permutation> Permutation::split_col(unsigned split_value)
     return {Permutation{row_first, col_first}, Permutation{row_second, col_second}};
 }
 
-std::pair<Permutation, Permutation> Permutation::split_row(unsigned split_value) const {
-    std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
-    std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
-    for (const auto &matched_pair: row_view) {
-        if (matched_pair.first <= split_value) {
-            row_first.push_back(matched_pair);
-        }
-        if (matched_pair.first > split_value) {
-            row_second.push_back(matched_pair);
-        }
-    }
-    for (const auto &matched_pair: col_view) {
-        if (matched_pair.second <= split_value) {
-            col_first.push_back(matched_pair);
-        }
-        if (matched_pair.second > split_value) {
-            col_second.push_back(matched_pair);
-        }
-    }
-    return {Permutation{row_first, col_first}, Permutation{row_second, col_second}};
-}
+class SteadyAnt {
+private:
+    std::vector <std::pair <unsigned, unsigned>> good_elements_row;
+    std::vector <std::pair <unsigned, unsigned>> good_elements_col;
 
-// How to join mappings: if joining for the product for two permutations, 
-// where the first one's row x is actually i, and the other's row y is j.
-// The resulting permutation square [x][y] should be [i][j].
-Permutation steady_ant(const Permutation &p, const Permutation &q) {
+    std::vector <std::pair <unsigned, unsigned>> low_cols ;  // seen are lower-right
+    std::vector <std::pair <unsigned, unsigned>> low_rows ;  // seen are lower-right
+    std::vector <std::pair <unsigned, unsigned>> high_cols;  // seen are upper-left
+    std::vector <std::pair <unsigned, unsigned>> high_rows;  // seen are upper-left
+    unsigned low_row_position = 0;
+    unsigned low_col_position = 0;
+    unsigned high_row_position = 0;
+    unsigned high_col_position = 0;
+    unsigned ant_row, ant_col;
+
+
+    // Checks whether the ant has passed the last row with permutation elements.
+    bool have_rows_ended() const {
+        return low_row_position == low_rows.size() &&
+               high_row_position == high_rows.size();
+    }
+
+    // Checks whether the ant has passed the last col with permutation elements.
+    bool have_cols_ended() const {
+        return low_col_position == low_cols.size() &&
+               high_col_position == high_cols.size();
+    }
+
+    // Try to move the ant up.
+    // It might stop seeing a bad R_high value, or see a new bad R_low value.
+    // If this happens, the balance is broken and the ant can not move up.
+    bool can_move_up() const {
+        unsigned new_low_position = low_row_position;
+        unsigned new_high_position = high_row_position;
+        while (new_high_position < high_rows.size()
+                && high_rows[new_high_position].first == ant_row) {
+            if (high_rows[new_high_position].second < ant_col) {
+                return false;
+            }
+            new_high_position++;
+        }
+        while (new_low_position < low_rows.size()
+                && low_rows[new_low_position].first == ant_row) {
+            if (low_rows[new_low_position].second >= ant_col) {
+                return false;
+            }
+            new_low_position++;
+        }
+        return !have_rows_ended();
+    }
+
+    // Try to move the ant right.
+    // It might stop seeing a bad R_low value, or see a new bad R_high value.
+    // If this happens, the balance is broken and the ant can not move right.
+    bool can_move_right() const {
+        unsigned new_low_position = low_col_position;
+        unsigned new_high_position = high_col_position;
+        while (new_high_position < high_cols.size() 
+                && high_cols[new_high_position].first == ant_col) {
+            if (high_cols[new_high_position].second <= ant_row) {
+                return false;
+            }
+            new_high_position++;
+        }
+        while (new_low_position < low_cols.size() 
+                && low_cols[new_low_position].first == ant_col) {
+            if (low_cols[new_low_position].second > ant_row) {
+                return false;
+            }
+            new_low_position++;
+        }
+        return !have_cols_ended();
+    }
+
+    // Moves the ant up to the next row with permutation elements.
+    void move_up() {
+        while (high_row_position < high_rows.size() 
+                && high_rows[high_row_position].first == ant_row) {
+            if (high_rows[high_row_position].second >= ant_col) {
+                good_elements_row.push_back(high_rows[high_row_position]);
+            }
+            high_row_position++;
+        }
+        while (low_row_position < low_rows.size()
+                && low_rows[low_row_position].first == ant_row) {
+            if (low_rows[low_row_position].second < ant_col) {
+                good_elements_row.push_back(low_rows[low_row_position]);
+            }
+            low_row_position++;
+        }
+        ant_row = get_next_row();
+    }
+
+    // Moves the ant right to the next col with permutation elements.
+    void move_right() {
+        while (high_col_position < high_cols.size()
+                && high_cols[high_col_position].first == ant_col) {
+            if (high_cols[high_col_position].second > ant_row) {
+                good_elements_col.push_back(high_cols[high_col_position]);
+            }
+            high_col_position++;
+        }
+        while (low_col_position < low_cols.size()
+                && low_cols[low_col_position].first == ant_col) {
+            if (low_cols[low_col_position].second <= ant_row) {
+                good_elements_col.push_back(low_cols[low_col_position]);
+            }
+            low_col_position++;
+        }
+        ant_col = get_next_col();
+    }
+
+    // Returns the next interesting row (with permutation elements) for the ant,
+    // or a fixed row smaller than all existing ones if all such rows have been visited.
+    unsigned get_next_row() const {
+        if (have_rows_ended()) {
+            return std::min(low_rows.back().first, high_rows.back().first) - 1;
+        } else if (low_row_position == low_rows.size()) {
+            return high_rows[high_row_position].first;
+        } else if (high_row_position == high_rows.size()) {
+            return low_rows[low_row_position].first;
+        } else {
+            return std::max(low_rows[low_row_position].first,
+                            high_rows[high_row_position].first);
+        }
+    }
+
+    // Returns the next interesting column (with permutation elements) for the ant,
+    // or a fixed col smaller than all existing ones if all such cols have been visited.
+    unsigned get_next_col() const {
+        if (have_cols_ended()) {
+            return std::max(low_cols.back().first, high_cols.back().first) + 1;
+        } else if (low_col_position == low_cols.size()) {
+            return high_cols[high_col_position].first;
+        } else if (high_col_position == high_cols.size()) {
+            return low_cols[low_col_position].first;
+        } else {
+            return std::min(low_cols[low_col_position].first,
+                            high_cols[high_col_position].first);
+        }
+    }
+public:
+    // Initializes the steady ant traversal for a pair of r_low, r_high permutation matrices.
+    SteadyAnt(const Permutation &r_low, const Permutation &r_high) {
+        low_cols = r_low.get_col_view();
+        low_rows = r_low.get_row_view();
+        high_cols = r_high.get_col_view();
+        high_rows = r_high.get_row_view();
+        // The ant starts from high rows (lower-left corner).
+        std::reverse(low_rows.begin(), low_rows.end());
+        std::reverse(high_rows.begin(), high_rows.end());
+    }
+
+    // Does the main ant traversal and returns the fixed permutation product.
+    Permutation restore_correct_product() {
+        // The ant position.
+        // This is the pair of indexes before which the ant is currently located.
+        ant_row = get_next_row();
+        ant_col = get_next_col();
+        while (!have_rows_ended() || !have_cols_ended()) {
+            if (can_move_up()) {
+                move_up();
+            } else if (can_move_right()) {
+                move_right();
+            } else {
+                // A diagonal move adds an element to the resulting permutation.
+                good_elements_row.push_back({ant_row, ant_col});
+                good_elements_col.push_back({ant_col, ant_row});
+                move_up();
+                move_right();
+            }
+        }
+        // Fixes the reversed row order.
+        std::reverse(good_elements_row.begin(), good_elements_row.end());
+        return Permutation{good_elements_row, good_elements_col};
+    }
+};
+
+// Recursively multiplies two permutations using the steady ant algorithm.
+Permutation multiply(const Permutation &p, const Permutation &q) {
     if (p.get_nonzero_amount() == 0 || q.get_nonzero_amount() == 0) {
         // If all elements are zeroes, the product is a zero as well.
         return Permutation({}, {});
@@ -174,7 +344,7 @@ Permutation steady_ant(const Permutation &p, const Permutation &q) {
     // The recursion base: at most one non-zero in each permutation.
     if (p.get_nonzero_amount() == 1 && q.get_nonzero_amount() == 1) {
         // The only non-zero value in the product C = A * B is 
-        // C[i][k] if A[i][j] and B[j][k] are both non-zero.
+        // C[i][k] if A[i][_] and B[_][k] are both non-zero.
         std::pair<unsigned, unsigned> p_nonzero = p.get_row_view()[0];
         std::pair<unsigned, unsigned> q_nonzero = q.get_col_view()[0];
             return Permutation({{p_nonzero.first, q_nonzero.first}},
@@ -184,22 +354,18 @@ Permutation steady_ant(const Permutation &p, const Permutation &q) {
     // Split the first matrix by cols and the second by rows on the same index
     //  and remove all zeroes from the permutation halves (ie permutation pairs
     // from one half into the other).
-    auto p_split = p.split_col(p.get_col_split_index());
-    auto q_split = q.split_row(q.get_row_split_index());
+    auto p_split = p.split_col();
+    auto q_split = q.split_row();
     // Recursively multiply two pairs of permutations.
-    Permutation r_low = steady_ant(p_split.first, q_split.first);
-    Permutation r_high = steady_ant(p_split.second, q_split.second);
-    // Unmap the products by adding removed zero rows as zero rows in the result
-    // from two matrices of size n / 2 to subpermutations of size n.
-    // This is not required since the permutation is stored as an array of pairs.
+    Permutation r_low = multiply(p_split.first, q_split.first);
+    Permutation r_high = multiply(p_split.second, q_split.second);
 
     // The conquer phrase.
     // "Ant" scanline counting the amount of wrong elements in the sum-product.
     // Remove all incorrect elements: higher than the ant scan for the one matrix,
     // lower than the ant scan for the other matrix.
     SteadyAnt ant = SteadyAnt(r_low, r_high);
-    ant.do_traversal();
-    return Permutation(ant.good_elements_row, ant.good_elements_col);
+    return ant.restore_correct_product();
 }
 
 SubpermutationMatrix SubpermutationMatrix::operator*(
@@ -208,11 +374,11 @@ SubpermutationMatrix SubpermutationMatrix::operator*(
         throw MatrixException("Sticky Multiplication",
                               "#arg1.columns != #arg2.rows");
     }
-    // Preprocessing before feeding everything to the recursive steady_ant function.
-    // Convert the SubpermutationMatrix to the permutation format used by steady_ant.
+    // Preprocessing before feeding everything to the recursive multiply function.
+    // Convert the SubpermutationMatrix to the permutation format used by multiply.
     // It is not optimal for normal use as does not permit O(1) queries to elements
-    // of the matrices, but it does not store zero rows and as such fits steady_ant.
-    Permutation result = steady_ant(Permutation(*this), Permutation(m));
+    // of the matrices, but it does not store zero rows and as such fits multiply.
+    Permutation result = multiply(Permutation(*this), Permutation(m));
     return result.expand(rows, m.get_cols());
 }
 

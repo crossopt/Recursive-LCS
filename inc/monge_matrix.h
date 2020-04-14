@@ -97,10 +97,12 @@ public:
     unsigned operator() (unsigned x, unsigned y) const override;
 };
 
-
+// Utility class for storing a permutation as a list of pairs. 
 class Permutation {
 private:
+    // The list of permutation pairs, sorted by row index in ascending order.
     std::vector <std::pair <unsigned, unsigned>> row_view;
+    // The list of permutation pairs, sorted by row index in descending order.
     std::vector <std::pair <unsigned, unsigned>> col_view;
 
 public:
@@ -110,11 +112,14 @@ public:
                         col_view(rev_permutation_vector) {}
     explicit Permutation(const SubpermutationMatrix &m);
 
+    // Returns the amount of non-zero elements in the permutation.
     unsigned get_nonzero_amount() const {return row_view.size(); }
-    unsigned get_row_split_index() const;
-    unsigned get_col_split_index() const;
-    std::pair<Permutation, Permutation> split_col(unsigned split_value) const;
-    std::pair<Permutation, Permutation> split_row(unsigned split_value) const;
+    // Splits the permutation into two roughly equal halves by their column values.
+    std::pair<Permutation, Permutation> split_col() const;
+    // Splits the permutation into two roughly equal halves by their row values.
+    std::pair<Permutation, Permutation> split_row() const;
+    // Expands the permutation into a SubpermutationMatrix
+    // with the necessary amount of rows and columns.
     SubpermutationMatrix expand(unsigned rows, unsigned cols) const;
 
     std::vector <std::pair<unsigned, unsigned> > get_row_view() const;
@@ -157,183 +162,6 @@ public:
     // a n * m matrix by a m * k one is O(n * m * k).
     MongeMatrix operator*(const MongeMatrix &m) const;
     unsigned operator() (unsigned x, unsigned y) const override;
-};
-
-
-class SteadyAnt {
-private:
-    std::vector <std::pair <unsigned, unsigned>> low_cols ;  // seen are lower-right
-    std::vector <std::pair <unsigned, unsigned>> low_rows ;  // seen are lower-right
-    std::vector <std::pair <unsigned, unsigned>> high_cols; // seen are upper-left
-    std::vector <std::pair <unsigned, unsigned>> high_rows; // seen are upper-left
-    unsigned low_row_position = 0;
-    unsigned low_col_position = 0;
-    unsigned high_row_position = 0;
-    unsigned high_col_position = 0;
-    unsigned ant_row, ant_col;
-
-public:
-    std::vector <std::pair <unsigned, unsigned>> good_elements_row;
-    std::vector <std::pair <unsigned, unsigned>> good_elements_col;
-
-    SteadyAnt(const Permutation &r_low, const Permutation &r_high) {
-        low_cols = r_low.get_col_view();  // seen are lower-right
-        low_rows = r_low.get_row_view();  // seen are lower-right
-        high_cols = r_high.get_col_view(); // seen are upper-left
-        high_rows = r_high.get_row_view(); // seen are upper-left
-
-        // The ant starts from high rows (lower-left corner).
-        std::reverse(low_rows.begin(), low_rows.end());
-        std::reverse(high_rows.begin(), high_rows.end());
-    }
-
-    bool have_rows_ended() const {
-        return low_row_position == low_rows.size() &&
-               high_row_position == high_rows.size();
-    }
-
-    bool have_cols_ended() const {
-        return low_col_position == low_cols.size() &&
-               high_col_position == high_cols.size();
-    }
-
-    // Try to move the ant up.
-    // It might stop seeing a bad R_high value, or see a new bad R_low value.
-    bool can_move_up() const {
-        unsigned new_low_position = low_row_position;
-        unsigned new_high_position = high_row_position;
-        while (new_high_position < high_rows.size() && high_rows[new_high_position].first == ant_row) {
-            if (high_rows[new_high_position].second < ant_col) {
-                return false;
-            }
-            new_high_position++;
-        }
-        while (new_low_position < low_rows.size()
-            && low_rows[new_low_position].first == ant_row) {
-            if (low_rows[new_low_position].second >= ant_col) {
-                return false;
-            }
-            new_low_position++;
-        }
-        return !have_rows_ended();
-    }
-
-    // Try to move the ant right.
-    // It might stop seeing a bad R_low value, or see a new bad R_high value.
-    bool can_move_right() const {
-        unsigned new_low_position = low_col_position;
-        unsigned new_high_position = high_col_position;
-        while (new_high_position < high_cols.size() && high_cols[new_high_position].first == ant_col) {
-            if (high_cols[new_high_position].second <= ant_row) {
-                return false;
-            }
-            new_high_position++;
-        }
-        while (new_low_position < low_cols.size() && low_cols[new_low_position].first == ant_col) {
-            if (low_cols[new_low_position].second > ant_row) {
-                return false;
-            }
-            new_low_position++;
-        }
-        return !have_cols_ended();
-    }
-
-    void move_up() {
-        while (high_row_position < high_rows.size()
-            && high_rows[high_row_position].first == ant_row) {
-            // check badness before moving on
-            if (high_rows[high_row_position].second >= ant_col) {
-                good_elements_row.push_back(high_rows[high_row_position]);
-            }
-            high_row_position++;
-        }
-        while (low_row_position < low_rows.size()
-            && low_rows[low_row_position].first == ant_row) {
-            // check badness before moving on
-            if (low_rows[low_row_position].second < ant_col) {
-                good_elements_row.push_back(low_rows[low_row_position]);
-            }
-            low_row_position++;
-        }
-        ant_row = get_next_row();
-    }
-
-    void move_right() {
-        while (high_col_position < high_cols.size()
-            && high_cols[high_col_position].first == ant_col) {
-            if (high_cols[high_col_position].second > ant_row) {
-                good_elements_col.push_back(high_cols[high_col_position]);
-            }
-            high_col_position++;
-            // check badness before moving on
-        }
-        while (low_col_position < low_cols.size()
-            && low_cols[low_col_position].first == ant_col) {
-            // check badness before moving on
-            if (low_cols[low_col_position].second <= ant_row) {
-                good_elements_col.push_back(low_cols[low_col_position]);
-            }
-            low_col_position++;
-        }
-        ant_col = get_next_col();
-    }
-
-    unsigned get_next_row() const {
-        if (have_rows_ended()) {
-            return std::min(low_rows.back().first, high_rows.back().first) - 1;
-        } else if (low_row_position == low_rows.size()) {
-            return high_rows[high_row_position].first;
-        } else if (high_row_position == high_rows.size()) {
-            return low_rows[low_row_position].first;
-        } else {
-            return std::max(low_rows[low_row_position].first,
-                            high_rows[high_row_position].first);
-        }
-    }
-
-    unsigned get_next_col() const {
-        if (have_cols_ended()) {
-            return std::max(low_cols.back().first, high_cols.back().first) + 1;
-        } else if (low_col_position == low_cols.size()) {
-            return high_cols[high_col_position].first;
-        } else if (high_col_position == high_cols.size()) {
-            return low_cols[low_col_position].first;
-        } else {
-            return std::min(low_cols[low_col_position].first,
-                            high_cols[high_col_position].first);
-        }
-    }
-
-    void do_traversal() {
-        if (!low_cols.size()) {
-            good_elements_row = high_rows;
-            good_elements_col = high_cols;
-            return;
-        }
-        if (!high_cols.size()) {
-            good_elements_row = low_rows;
-            good_elements_col = low_cols;
-            return;
-        }
-
-        // The ant is *before* these indexes.
-        ant_row = get_next_row();
-        ant_col = get_next_col();
-        while (!have_rows_ended() || !have_cols_ended()) {
-            if (can_move_up()) {
-                move_up();
-            } else if (can_move_right()) {
-                move_right();
-            } else {
-                good_elements_row.push_back({ant_row, ant_col});
-                good_elements_col.push_back({ant_col, ant_row});
-                move_up();
-                move_right();
-            }
-        }
-        std::reverse(good_elements_row.begin(), good_elements_row.end());
-    }
-
 };
 
 }  // namespace matrix
