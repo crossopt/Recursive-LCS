@@ -167,38 +167,18 @@ std::pair<Permutation, Permutation> Permutation::split_row(unsigned split_value)
 // where the first one's row x is actually i, and the other's row y is j.
 // The resulting permutation square [x][y] should be [i][j].
 Permutation steady_ant(const Permutation &p, const Permutation &q) {
-    // std::cout << "STEADY ANT ";
-    // for (auto pp: p.get_row_view()) {
-    //     std::cout << pp.first << ',' << pp.second << ' ';
-    // } std::cout << " ::: ";
-    // for (auto pp: p.get_col_view()) {
-    //     std::cout << pp.first << ',' << pp.second << ' ';
-    // } std::cout << "             ";
-    // for (auto qq: q.get_row_view()) {
-    //     std::cout << qq.first << ',' << qq.second << ' ';
-    // } std::cout << " ::: ";
-
-    // for (auto qq: q.get_col_view()) {
-    //     std::cout << qq.first << ',' << qq.second << ' ';
-    // } std::cout << '\n';
     if (p.get_nonzero_amount() == 0 || q.get_nonzero_amount() == 0) {
         // If all elements are zeroes, the product is a zero as well.
         return Permutation({}, {});
     }
     // The recursion base: at most one non-zero in each permutation.
     if (p.get_nonzero_amount() == 1 && q.get_nonzero_amount() == 1) {
-        // The only possible non-zero value in the product C = A * B is 
+        // The only non-zero value in the product C = A * B is 
         // C[i][k] if A[i][j] and B[j][k] are both non-zero.
         std::pair<unsigned, unsigned> p_nonzero = p.get_row_view()[0];
         std::pair<unsigned, unsigned> q_nonzero = q.get_col_view()[0];
-        // std::cout << "RECURSION BASE\n";
             return Permutation({{p_nonzero.first, q_nonzero.first}},
                                {{q_nonzero.first, p_nonzero.first}});
-        // if (p_nonzero.second == q_nonzero.first) {
-        //     std::cout << "MULTIPLIED OK\n";
-        // } else {
-        //     return Permutation({}, {});
-        // }
     }
     // The divide phrase.
     // Split the first matrix by cols and the second by rows on the same index
@@ -206,19 +186,6 @@ Permutation steady_ant(const Permutation &p, const Permutation &q) {
     // from one half into the other).
     auto p_split = p.split_col(p.get_col_split_index());
     auto q_split = q.split_row(q.get_row_split_index());
-    // std::cout << "SPLIT ";
-    // for (auto pp: p_split.first.get_row_view()) {
-    //     std::cout << pp.first << ',' << pp.second << ' ';
-    // } std::cout << "      ,,       ";
-    // for (auto qq: p_split.second.get_row_view()) {
-    //     std::cout << qq.first << ',' << qq.second << ' ';
-    // } std::cout << " : ";
-    // for (auto pp: q_split.first.get_row_view()) {
-    //     std::cout << pp.first << ',' << pp.second << ' ';
-    // } std::cout << "      ,,       ";
-    // for (auto qq: q_split.second.get_row_view()) {
-    //     std::cout << qq.first << ',' << qq.second << ' ';
-    // } std::cout << "\n";
     // Recursively multiply two pairs of permutations.
     Permutation r_low = steady_ant(p_split.first, q_split.first);
     Permutation r_high = steady_ant(p_split.second, q_split.second);
@@ -230,18 +197,8 @@ Permutation steady_ant(const Permutation &p, const Permutation &q) {
     // "Ant" scanline counting the amount of wrong elements in the sum-product.
     // Remove all incorrect elements: higher than the ant scan for the one matrix,
     // lower than the ant scan for the other matrix.
-    // std::cout << "CREATING ANT\n";
     SteadyAnt ant = SteadyAnt(r_low, r_high);
-    // std::cout << "CREATED ANT\n";
     ant.do_traversal();
-    // std::cout << "TRAVERSED ANT\n";
-    // std::cout << "RESULT: ";
-    // for (auto i : ant.good_elements_row) {
-    //     std::cout << i.first << ',' << i.second << ' ';
-    // } std::cout << "       ";
-    // for (auto i : ant.good_elements_col) {
-    //     std::cout << i.first << ',' << i.second << ' ';
-    // } std::cout << '\n';
     return Permutation(ant.good_elements_row, ant.good_elements_col);
 }
 

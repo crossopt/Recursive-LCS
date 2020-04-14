@@ -160,19 +160,6 @@ public:
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class SteadyAnt {
 private:
     std::vector <std::pair <unsigned, unsigned>> low_cols ;  // seen are lower-right
@@ -195,23 +182,6 @@ public:
         high_cols = r_high.get_col_view(); // seen are upper-left
         high_rows = r_high.get_row_view(); // seen are upper-left
 
-        // std::cout << "low_rows ";
-        // for (auto i : low_rows) {
-        //     std::cout << i.first << ',' << i.second << ' ';
-        // } std::cout << std::endl;
-        // std::cout << "low_cols ";
-        // for (auto i : low_cols) {
-        //     std::cout << i.first << ',' << i.second << ' ';
-        // } std::cout << std::endl;
-        // std::cout << "high_cols ";
-        // for (auto i : high_cols) {
-        //     std::cout << i.first << ',' << i.second << ' ';
-        // } std::cout << std::endl;
-        // std::cout << "high_rows ";
-        // for (auto i : high_rows) {
-        //     std::cout << i.first << ',' << i.second << ' ';
-        // } std::cout << std::endl;
-
         // The ant starts from high rows (lower-left corner).
         std::reverse(low_rows.begin(), low_rows.end());
         std::reverse(high_rows.begin(), high_rows.end());
@@ -230,72 +200,48 @@ public:
     // Try to move the ant up.
     // It might stop seeing a bad R_high value, or see a new bad R_low value.
     bool can_move_up() const {
-         // can minus until r_low_rows[ant_i - 1] == ant_j or r_high_rows[ant_i] == ant_j
         unsigned new_low_position = low_row_position;
         unsigned new_high_position = high_row_position;
-        // std::cout << "START U " << new_high_position << ' ' << new_low_position << '\n';
         while (new_high_position < high_rows.size() && high_rows[new_high_position].first == ant_row) {
-            // std::cout << "new high " << new_high_position << '\n';
-            if (high_rows[new_high_position].second < ant_col) { // old removes
-                // std::cout << "FALSED HIGH\n";
-                return false; // was before ant row moving to ant row now upper left whoosh!
+            if (high_rows[new_high_position].second < ant_col) {
+                return false;
             }
             new_high_position++;
         }
         while (new_low_position < low_rows.size()
-            && low_rows[new_low_position].first == ant_row) { // new adds
-            // std::cout << "new low " << new_low_position << '\n';
-            // std::cout << low_rows[new_low_position].first << ',' << low_rows[new_low_position].second << "  ant " << ant_row <<',' << ant_col << '\n';
+            && low_rows[new_low_position].first == ant_row) {
             if (low_rows[new_low_position].second >= ant_col) {
-                // std::cout << "!!!!!!!!!!!!!!!!!!!!!!!! FALSED LOW\n";
-                return false; // moved from row, left bad behind
+                return false;
             }
             new_low_position++;
         }
-        // std::cout << "CHECKING UP " << new_high_position << ' ' << new_low_position << ": " << have_rows_ended() << '\n';
         return !have_rows_ended();
-        //  && (new_high_position >= high_rows.size()
-        //     || high_rows[new_high_position].first > ant_row) &&
-        // (new_low_position >= low_rows.size()
-        //     || low_rows[new_low_position].first > ant_row);
     }
 
     // Try to move the ant right.
     // It might stop seeing a bad R_low value, or see a new bad R_high value.
     bool can_move_right() const {
-        // can plus until r_low_cols[ant_j] == ant_i or r_high_cols[ant_j + 1] == ant_i
         unsigned new_low_position = low_col_position;
         unsigned new_high_position = high_col_position;
-        // std::cout << "START R " << new_high_position << ' ' << new_low_position << '\n';
         while (new_high_position < high_cols.size() && high_cols[new_high_position].first == ant_col) {
-                // std::cout << "new high " << new_low_position << '\n';
-            if (high_cols[new_high_position].second <= ant_row) { // old removes
-                return false; // was before ant row moving to ant row now upper left whoosh!
+            if (high_cols[new_high_position].second <= ant_row) {
+                return false;
             }
             new_high_position++;
         }
-        while (new_low_position < low_cols.size() && low_cols[new_low_position].first == ant_col) { // new adds
-            // std::cout << "new low " << new_low_position << '\n';
-            // std::cout << low_rows[new_low_position].first << ',' << low_rows[new_low_position].second << "  ant " << ant_row <<',' << ant_col << '\n';
+        while (new_low_position < low_cols.size() && low_cols[new_low_position].first == ant_col) {
             if (low_cols[new_low_position].second > ant_row) {
-                return false; // moved from row, left bad behind
+                return false;
             }
             new_low_position++;
         }
-        // std::cout << "CHECKING RIGHT " << new_high_position << ' ' << new_low_position << ":  " << have_cols_ended() << '\n';
         return !have_cols_ended();
-        //  && (new_high_position >= high_cols.size()
-        //     || high_cols[new_high_position].first > ant_col) &&
-        // (new_low_position >= low_cols.size()
-        //     || low_cols[new_low_position].first > ant_col);
     }
 
     void move_up() {
         while (high_row_position < high_rows.size()
             && high_rows[high_row_position].first == ant_row) {
             // check badness before moving on
-            // std::cout << "BAD DAY HI RO" << ant_row << ',' << ant_col  << "   "
-        // << high_rows[high_row_position].first << ',' << high_rows[high_row_position].second << '\n';
             if (high_rows[high_row_position].second >= ant_col) {
                 good_elements_row.push_back(high_rows[high_row_position]);
             }
@@ -304,22 +250,17 @@ public:
         while (low_row_position < low_rows.size()
             && low_rows[low_row_position].first == ant_row) {
             // check badness before moving on
-            // std::cout << "BAD DAY LO RO" << ant_row << ',' << ant_col  << "   "
-        // << low_rows[low_row_position].first << ',' << low_rows[low_row_position].second << '\n';
             if (low_rows[low_row_position].second < ant_col) {
                 good_elements_row.push_back(low_rows[low_row_position]);
             }
             low_row_position++;
         }
         ant_row = get_next_row();
-        // std::cout << have_rows_ended() << " NEW ANT ROW " << ant_row << '\n';
     }
 
     void move_right() {
         while (high_col_position < high_cols.size()
             && high_cols[high_col_position].first == ant_col) {
-            // std::cout << "BAD DAY HI CO" << ant_row << ',' << ant_col  << "   "
-        // << high_cols[high_col_position].first << ',' << high_cols[high_col_position].second << '\n';
             if (high_cols[high_col_position].second > ant_row) {
                 good_elements_col.push_back(high_cols[high_col_position]);
             }
@@ -329,8 +270,6 @@ public:
         while (low_col_position < low_cols.size()
             && low_cols[low_col_position].first == ant_col) {
             // check badness before moving on
-            // std::cout << "BAD DAY LO CO" << ant_row << ',' << ant_col  << "   "
-        // << low_cols[low_col_position].first << ',' << low_cols[low_col_position].second << '\n';
             if (low_cols[low_col_position].second <= ant_row) {
                 good_elements_col.push_back(low_cols[low_col_position]);
             }
@@ -381,32 +320,21 @@ public:
         ant_row = get_next_row();
         ant_col = get_next_col();
         while (!have_rows_ended() || !have_cols_ended()) {
-            // std::cout << "CURRENT ANT POSITION IS " << ant_row << ' ' << ant_col << '\n';
             if (can_move_up()) {
-                // std::cout << "CAN MOVE UP\n";
                 move_up();
             } else if (can_move_right()) {
-                // std::cout << "CANT MOVE UP, CAN MOVE RIGHT\n";
                 move_right();
             } else {
-                // std::cout << "!!!!!!!!!!!!!!!!!!!!!! FUCK MOVES, DIAG TIME " << ant_row << ' ' << ant_col << "\n";
                 good_elements_row.push_back({ant_row, ant_col});
                 good_elements_col.push_back({ant_col, ant_row});
                 move_up();
                 move_right();
             }
-        }        
-        // std::cout << "FINAL ANT POSITION IS " << ant_row << ' ' << ant_col << '\n';
+        }
         std::reverse(good_elements_row.begin(), good_elements_row.end());
     }
 
 };
-
-
-
-
-
-
 
 }  // namespace matrix
 }  // namespace LCS
