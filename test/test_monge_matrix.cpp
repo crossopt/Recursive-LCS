@@ -16,7 +16,7 @@ void test_matrices_match(const MatrixInterface &first_matrix,
     ASSERT_EQ(first_matrix.get_cols(), second_matrix.get_cols());
     for (unsigned i = 0; i < first_matrix.get_rows(); ++i) {
         for (unsigned j = 0; j < first_matrix.get_cols(); ++j) {
-            ASSERT_EQ(first_matrix(i, j), second_matrix(i, j));
+            ASSERT_EQ(first_matrix(i, j), second_matrix(i, j)); 
         }
     }
 }
@@ -51,6 +51,13 @@ void test_monge_multiplication(const MongeMatrix &first_matrix,
     SubpermutationMatrix permutation_product =
             SubpermutationMatrix(first_matrix) ^ SubpermutationMatrix(second_matrix);
     test_matrices_match(permutation_product, SubpermutationMatrix(expected_product));
+}
+
+void test_subpermutation_multiplication(const SubpermutationMatrix &first_matrix,
+                                        const SubpermutationMatrix &second_matrix) {
+    SubpermutationMatrix actual_product = first_matrix * second_matrix;
+    SubpermutationMatrix expected_product = first_matrix ^ second_matrix;
+    test_matrices_match(actual_product, expected_product);
 }
 
 TEST(MongeMatrixTest, DominanceSumAndCrossDifference) {
@@ -201,17 +208,12 @@ TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationForAllPermutations) {
     do {
         std::vector <unsigned> second_permutation = {1, 2, 3, 4, 5};
         do {
-            SubpermutationMatrix actual_product =
-                    SubpermutationMatrix{5, 5, first_permutation} *
-                    SubpermutationMatrix{5, 5, second_permutation};
-            SubpermutationMatrix expected_product = 
-                    SubpermutationMatrix{5, 5, first_permutation} ^
-                    SubpermutationMatrix{5, 5, second_permutation};
-            test_matrices_match(actual_product, expected_product);
+            test_subpermutation_multiplication(
+                    SubpermutationMatrix{5, 5, first_permutation},
+                    SubpermutationMatrix{5, 5, second_permutation});
         } while (std::next_permutation(second_permutation.begin(), second_permutation.end()));
     } while (std::next_permutation(first_permutation.begin(), first_permutation.end()));
 }
-
 
 TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationLargeId) {
     std::vector <unsigned> first_permutation(10000, 1);
@@ -226,17 +228,32 @@ TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationLargeId) {
     test_matrices_match(actual_product, expected_product);
 }
 
-
 TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationTestReversedId) {
     std::vector <unsigned> first_permutation = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
     std::vector <unsigned> second_permutation = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-    SubpermutationMatrix actual_product =
-                    SubpermutationMatrix{10, 10, first_permutation} *
-                    SubpermutationMatrix{10, 10, second_permutation};
-    SubpermutationMatrix expected_product = 
-                    SubpermutationMatrix{10, 10, first_permutation} ^
-                    SubpermutationMatrix{10, 10, second_permutation};
-    test_matrices_match(actual_product, expected_product);
+    test_subpermutation_multiplication(
+                    SubpermutationMatrix{10, 10, first_permutation},
+                    SubpermutationMatrix{10, 10, second_permutation});
+}
+
+TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationTestNonSquareMatrixLargerSquareResult) {
+    std::vector <unsigned> first_permutation = {4, 0, 5, 6, 7, 0, 1, 0, 3, 2};
+    std::vector <unsigned> second_permutation = {7, 5, 3, 9, 1, 10, 6};
+    test_subpermutation_multiplication(
+                    SubpermutationMatrix{10, 7, first_permutation},
+                    SubpermutationMatrix{7, 10, second_permutation});
+}
+
+TEST(MongeMatrixTest, SubpermutationMatrixMultiplicationTestNonSquareMatrixSmallerSquareResult) {
+    // std::vector <unsigned> first_permutation = {4, 2, 8, 12, 7, 15, 1, 11, 10, 3};
+    // std::vector <unsigned> second_permutation = {4, 0, 6, 0, 8, 0, 0, 10, 1, 2, 5, 7, 0, 9, 3};
+    // std::vector <unsigned> first_permutation = {1, 2, 4};
+    // std::vector <unsigned> second_permutation = {0, 1, 2, 3};
+    std::vector <unsigned> first_permutation = {1, 3};
+    std::vector <unsigned> second_permutation = {2, 1, 0};
+    test_subpermutation_multiplication(
+                    SubpermutationMatrix{2, 3, first_permutation},
+                    SubpermutationMatrix{3, 2, second_permutation});
 }
 
 }  // namespace

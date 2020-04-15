@@ -171,6 +171,7 @@ private:
     unsigned high_row_position = 0;
     unsigned high_col_position = 0;
     unsigned ant_row, ant_col;
+    unsigned max_row, max_col;
 
 
     // Checks whether the ant has passed the last row with permutation elements.
@@ -272,31 +273,19 @@ private:
     // Returns the next interesting row (with permutation elements) for the ant,
     // or a fixed row smaller than all existing ones if all such rows have been visited.
     unsigned get_next_row() const {
-        if (have_rows_ended()) {
-            return std::min(low_rows.back().first, high_rows.back().first) - 1;
-        } else if (low_row_position == low_rows.size()) {
-            return high_rows[high_row_position].first;
-        } else if (high_row_position == high_rows.size()) {
-            return low_rows[low_row_position].first;
-        } else {
-            return std::max(low_rows[low_row_position].first,
-                            high_rows[high_row_position].first);
-        }
+        return std::max(low_row_position == low_rows.size()
+                            ? max_row : low_rows[low_row_position].first, 
+                        high_row_position == high_rows.size()
+                            ? max_row : high_rows[high_row_position].first);
     }
 
     // Returns the next interesting column (with permutation elements) for the ant,
     // or a fixed col smaller than all existing ones if all such cols have been visited.
     unsigned get_next_col() const {
-        if (have_cols_ended()) {
-            return std::max(low_cols.back().first, high_cols.back().first) + 1;
-        } else if (low_col_position == low_cols.size()) {
-            return high_cols[high_col_position].first;
-        } else if (high_col_position == high_cols.size()) {
-            return low_cols[low_col_position].first;
-        } else {
-            return std::min(low_cols[low_col_position].first,
-                            high_cols[high_col_position].first);
-        }
+        return std::min(low_col_position == low_cols.size()
+                            ? max_col : low_cols[low_col_position].first, 
+                        high_col_position == high_cols.size()
+                            ? max_col : high_cols[high_col_position].first);
     }
 public:
     // Initializes the steady ant traversal for a pair of r_low, r_high permutation matrices.
@@ -308,6 +297,11 @@ public:
         // The ant starts from high rows (lower-left corner).
         std::reverse(low_rows.begin(), low_rows.end());
         std::reverse(high_rows.begin(), high_rows.end());
+
+        max_row = std::min(low_rows.size() ? low_rows.back().first : 1, 
+                           high_rows.size() ? high_rows.back().first : 1) - 1;
+        max_col = std::max(low_cols.size() ? low_cols.back().first : 1, 
+                           high_cols.size() ? high_cols.back().first : 1) + 1;
     }
 
     // Does the main ant traversal and returns the fixed permutation product.
@@ -347,8 +341,8 @@ Permutation multiply(const Permutation &p, const Permutation &q) {
         // C[i][k] if A[i][_] and B[_][k] are both non-zero.
         std::pair<unsigned, unsigned> p_nonzero = p.get_row_view()[0];
         std::pair<unsigned, unsigned> q_nonzero = q.get_col_view()[0];
-            return Permutation({{p_nonzero.first, q_nonzero.first}},
-                               {{q_nonzero.first, p_nonzero.first}});
+        return Permutation({{p_nonzero.first, q_nonzero.first}},
+                           {{q_nonzero.first, p_nonzero.first}});
     }
     // The divide phrase.
     // Split the first matrix by cols and the second by rows on the same index
