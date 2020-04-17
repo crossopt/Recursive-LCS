@@ -99,31 +99,27 @@ public:
 
 // Utility class for storing a permutation as a list of pairs. 
 class Permutation {
-private:
-    // The list of permutation pairs, sorted by row index in ascending order.
-    std::vector <std::pair <unsigned, unsigned>> row_view;
-    // The list of permutation pairs, sorted by row index in descending order.
-    std::vector <std::pair <unsigned, unsigned>> col_view;
-
 public:
     explicit Permutation(const std::vector <std::pair <unsigned, unsigned> > &permutation_vector,
                          const std::vector <std::pair <unsigned, unsigned> > &rev_permutation_vector):
-                        row_view(permutation_vector),
-                        col_view(rev_permutation_vector) {}
+                        rows(permutation_vector),
+                        cols(rev_permutation_vector) {}
     explicit Permutation(const SubpermutationMatrix &m);
 
     // Returns the amount of non-zero elements in the permutation.
-    unsigned get_nonzero_amount() const {return row_view.size(); }
+    unsigned get_nonzero_amount() const {return rows.size(); }
     // Splits the permutation into two roughly equal halves by their column values.
     std::pair<Permutation, Permutation> split_col() const;
     // Splits the permutation into two roughly equal halves by their row values.
     std::pair<Permutation, Permutation> split_row() const;
     // Expands the permutation into a SubpermutationMatrix
     // with the necessary amount of rows and columns.
-    SubpermutationMatrix expand(unsigned rows, unsigned cols) const;
+    SubpermutationMatrix expand(unsigned row_amount, unsigned col_amount) const;
 
-    std::vector <std::pair<unsigned, unsigned> > get_row_view() const;
-    std::vector <std::pair<unsigned, unsigned> > get_col_view() const;
+    // The list of permutation pairs, sorted by row index in ascending order.
+    std::vector <std::pair <unsigned, unsigned>> rows;
+    // The list of permutation pairs, sorted by row index in descending order.
+    std::vector <std::pair <unsigned, unsigned>> cols;
 };
 
 // Explicitly stores a simple subunit-Monge matrix.
