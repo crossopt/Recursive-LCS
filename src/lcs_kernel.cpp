@@ -1,4 +1,4 @@
-#include "lcs.h"
+#include "lcs_kernel.h"
 
 #include <utility>
 #include <vector>
@@ -37,6 +37,23 @@ matrix::SubpermutationMatrix LCSKernel::calculate_kernel(unsigned a_l, unsigned 
         return first_half * second_half;
     }
 }
+
+unsigned LCSKernel::lcs_whole_a(unsigned b_l, unsigned b_r) {
+    return b_r - b_l - kernel_sum(b_l + a.size(), b_r);
+}
+
+unsigned LCSKernel::lcs_whole_b(unsigned a_l, unsigned a_r) {
+    return b.size() - kernel_sum(a.size() - a_l, a.size() + b.size() - a_r);
+}
+
+unsigned LCSKernel::lcs_suffix_a_prefix_b(unsigned a_l, unsigned b_r) {
+    return b_r - kernel_sum(a.size() - a_l, b_r);
+}
+
+unsigned LCSKernel::lcs_prefix_a_suffix_b(unsigned a_r, unsigned b_l) {
+    return b.size() - b_l - kernel_sum(b_l + a.size(), a.size() + b.size() - a_r);
+}
+
 
 }  // namespace kernel
 }  // namespace LCS
