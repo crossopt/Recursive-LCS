@@ -26,7 +26,7 @@ private:
 // Base class for implementation details shared by all matrices.
 class MatrixInterface {
 protected:
-    const unsigned rows, cols;
+    unsigned rows, cols;
     bool is_element_correct(unsigned x, unsigned y) const {
         return x < rows && y < cols;
     }
@@ -93,6 +93,9 @@ public:
     // O(n log n) using the Steady Ant algorithm, where n is the
     // maximum amount of nonzeroes in the subpermutation matrices.
     SubpermutationMatrix operator*(const SubpermutationMatrix &m) const;
+
+    void grow_front(unsigned new_rows);
+    void grow_back(unsigned new_cols);
 
     unsigned operator() (unsigned x, unsigned y) const override;
 };

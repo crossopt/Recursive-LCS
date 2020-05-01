@@ -1,5 +1,6 @@
 #include "monge_matrix.h"
 #include <iostream>
+#include <numeric>
 
 namespace LCS {
 namespace matrix {
@@ -61,6 +62,35 @@ unsigned SubpermutationMatrix::operator() (unsigned x, unsigned y) const {
             "row " + std::to_string(x) + " column " + std::to_string(y));
     }
     return x + 1 < matrix.size() && matrix[x + 1] == y + 1;
+}
+
+
+void SubpermutationMatrix::grow_back(unsigned new_cols) {
+    if (new_cols < cols) {
+        throw MatrixException("Growth query",
+            "new column size " + std::to_string(new_cols));
+    }
+    std::vector <unsigned> addition(new_cols - cols);
+    std::iota(addition.begin(), addition.end(), cols + 1);
+    rows += addition.size();
+    cols += addition.size();
+    matrix.insert(matrix.end(), addition.begin(), addition.end());
+}
+
+void SubpermutationMatrix::grow_front(unsigned new_rows) {
+    if (new_rows < rows) {
+        throw MatrixException("Growth query",
+            "new row size " + std::to_string(new_rows));
+    }
+    std::vector <unsigned> addition(new_rows - rows);
+    std::iota(addition.begin(), addition.end(), 1);
+    for (unsigned &old_element: matrix) {
+        old_element += addition.size();
+    }
+    rows += addition.size();
+    cols += addition.size();
+    matrix[0] -= addition.size();
+    matrix.insert(matrix.begin() + 1, addition.begin(), addition.end());
 }
 
 unsigned MongeMatrix::operator() (unsigned x, unsigned y) const {
