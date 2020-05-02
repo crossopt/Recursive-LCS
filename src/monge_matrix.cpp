@@ -112,15 +112,15 @@ SubpermutationMatrix SubpermutationMatrix::operator^(
 
 Permutation::Permutation(const SubpermutationMatrix &m) {
     std::vector <unsigned> count_for_cols(m.get_cols() + 1, 0);
-    for (unsigned i = 0; i < m.get_rows(); ++i) {
-        if (m.matrix[i + 1]) {
-            rows.push_back({i + 1, m.matrix[i + 1]});
+    for (unsigned i = m.get_rows(); i != 0; --i) {
+        if (m.matrix[i]) {
+            rows.push_back({i, m.matrix[i]});
         }
-        count_for_cols[m.matrix[i + 1]] = i + 1;
+        count_for_cols[m.matrix[i]] = i;
     }
-    for (unsigned i = 0; i < m.get_cols(); ++i) {
-        if (count_for_cols[i + 1]) {
-            cols.push_back({i + 1, count_for_cols[i + 1]});
+    for (unsigned i = 1; i <= m.get_cols(); ++i) {
+        if (count_for_cols[i]) {
+            cols.push_back({i, count_for_cols[i]});
         }
     }
 }
@@ -134,7 +134,7 @@ SubpermutationMatrix Permutation::expand(unsigned row_amount, unsigned col_amoun
 }
 
 std::pair<Permutation, Permutation> Permutation::split_row() const {
-    unsigned split_value = rows[(rows.size() - 1) / 2].first;
+    unsigned split_value = rows[rows.size() / 2].first;
     std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
     std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
     for (const auto &matched_pair: rows) {
@@ -186,17 +186,16 @@ private:
 
     const Permutation &low;  // ant-visible elements are lower-right
     const Permutation &high;  // ant-visible elements are upper-left
-    std::vector <std::pair <unsigned, unsigned>>::const_reverse_iterator low_row_it;
-    std::vector <std::pair <unsigned, unsigned>>::const_reverse_iterator high_row_it;
+    std::vector <std::pair <unsigned, unsigned>>::const_iterator low_row_it;
+    std::vector <std::pair <unsigned, unsigned>>::const_iterator high_row_it;
     std::vector <std::pair <unsigned, unsigned>>::const_iterator low_col_it;
     std::vector <std::pair <unsigned, unsigned>>::const_iterator high_col_it;
     unsigned ant_row, ant_col;
     unsigned min_row, max_col;
 
-
     // Checks whether the ant has passed the last row with permutation elements.
     bool have_rows_ended() const {
-        return low_row_it == low.rows.rend() && high_row_it == high.rows.rend();
+        return low_row_it == low.rows.end() && high_row_it == high.rows.end();
     }
 
     // Checks whether the ant has passed the last col with permutation elements.
@@ -208,12 +207,12 @@ private:
     // It might stop seeing a bad R_high value, or see a new bad R_low value.
     // If this happens, the balance is broken and the ant can not move up.
     bool can_move_up() const {
-        for (auto high_it = high_row_it; high_it != high.rows.rend() && high_it->first == ant_row; ++high_it) {
+        for (auto high_it = high_row_it; high_it != high.rows.end() && high_it->first == ant_row; ++high_it) {
             if (high_it->second < ant_col) {
                 return false;
             }
         }
-        for (auto low_it = low_row_it; low_it != low.rows.rend() && low_it->first == ant_row; ++low_it) {
+        for (auto low_it = low_row_it; low_it != low.rows.end() && low_it->first == ant_row; ++low_it) {
             if (low_it->second >= ant_col) {
                 return false;
             }
@@ -240,12 +239,12 @@ private:
 
     // Moves the ant up to the next row with permutation elements.
     void move_up() {
-        for (; high_row_it != high.rows.rend() && high_row_it->first == ant_row; ++high_row_it) {
+        for (; high_row_it != high.rows.end() && high_row_it->first == ant_row; ++high_row_it) {
             if (high_row_it->second >= ant_col) {
                 good_elements_row.push_back(*high_row_it);
             }
         }
-        for (; low_row_it != low.rows.rend() && low_row_it->first == ant_row; ++low_row_it) {
+        for (; low_row_it != low.rows.end() && low_row_it->first == ant_row; ++low_row_it) {
             if (low_row_it->second < ant_col) {
                 good_elements_row.push_back(*low_row_it);
             }
@@ -271,8 +270,8 @@ private:
     // Returns the next interesting row (with permutation elements) for the ant,
     // or a fixed row smaller than all existing ones if all such rows have been visited.
     unsigned get_next_row() const {
-        return std::max(low_row_it == low.rows.rend() ? min_row : low_row_it->first, 
-                        high_row_it == high.rows.rend() ? min_row : high_row_it->first);
+        return std::max(low_row_it == low.rows.end() ? min_row : low_row_it->first, 
+                        high_row_it == high.rows.end() ? min_row : high_row_it->first);
     }
 
     // Returns the next interesting column (with permutation elements) for the ant,
@@ -284,13 +283,13 @@ private:
 public:
     // Initializes the steady ant traversal for a pair of r_low, r_high permutation matrices.
     SteadyAnt(const Permutation &r_low, const Permutation &r_high): low(r_low), high(r_high) {
-        low_row_it = low.rows.rbegin();
-        high_row_it = high.rows.rbegin();
+        low_row_it = low.rows.begin();
+        high_row_it = high.rows.begin();
         low_col_it = low.cols.begin();
         high_col_it = high.cols.begin();
 
-        min_row = std::min(low.rows.size() ? low.rows[0].first : 1, 
-                           high.rows.size() ? high.rows[0].first : 1) - 1;
+        min_row = std::min(low.rows.size() ? low.rows.back().first : 1, 
+                           high.rows.size() ? high.rows.back().first : 1) - 1;
         max_col = std::max(low.cols.size() ? low.cols.back().first : 1, 
                            high.cols.size() ? high.cols.back().first : 1) + 1;
     }
@@ -298,7 +297,7 @@ public:
     // Does the main ant traversal and returns the fixed permutation product.
     Permutation restore_correct_product() {
         // The ant position.
-        // This is the pair of ites before which the ant is currently located.
+        // This is the pair of indexes before which the ant is currently located.
         ant_row = get_next_row();
         ant_col = get_next_col();
         while (!have_rows_ended() || !have_cols_ended()) {
@@ -314,8 +313,6 @@ public:
                 move_right();
             }
         }
-        // Fixes the reversed row order.
-        std::reverse(good_elements_row.begin(), good_elements_row.end());
         return Permutation{good_elements_row, good_elements_col};
     }
 };

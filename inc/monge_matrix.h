@@ -119,9 +119,9 @@ public:
     // with the necessary amount of rows and columns.
     SubpermutationMatrix expand(unsigned row_amount, unsigned col_amount) const;
 
-    // The list of permutation pairs, sorted by row index in ascending order.
-    std::vector <std::pair <unsigned, unsigned>> rows;
     // The list of permutation pairs, sorted by row index in descending order.
+    std::vector <std::pair <unsigned, unsigned>> rows;
+    // The list of permutation pairs, sorted by col index in ascending order.
     std::vector <std::pair <unsigned, unsigned>> cols;
 };
 
