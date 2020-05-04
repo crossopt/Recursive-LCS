@@ -1,0 +1,32 @@
+---
+matrix:
+    include:
+        language: cpp
+        os: linux
+        dist: bionic
+        addons:
+            apt:
+                update: true
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - sourceline: 'ppa:mhier/libboost-latest'
+                packages:
+                    - g++-8
+                    - libstdc++-8-dev
+                    - boost1.70
+        env:
+            - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        compiler:
+            - gcc
+        script:
+            - mkdir build
+            - cd build
+            - cmake ..
+            - make
+            - ./lcs_test
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
+notifications:
+    email: false
