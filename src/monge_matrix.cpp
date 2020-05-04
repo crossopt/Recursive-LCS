@@ -64,33 +64,39 @@ unsigned SubpermutationMatrix::operator() (unsigned x, unsigned y) const {
     return x + 1 < matrix.size() && matrix[x + 1] == y + 1;
 }
 
-
-void SubpermutationMatrix::grow_back(unsigned new_cols) {
-    if (new_cols < cols) {
+void Permutation::grow_back(unsigned new_cols) {
+    unsigned max_row = rows[0].first;
+    unsigned max_col = cols.back().first;
+    if (new_cols <= max_col) {
         throw MatrixException("Growth query",
             "new column size " + std::to_string(new_cols));
     }
-    std::vector <unsigned> addition(new_cols - cols);
-    std::iota(addition.begin(), addition.end(), cols + 1);
-    rows += addition.size();
-    cols += addition.size();
-    matrix.insert(matrix.end(), addition.begin(), addition.end());
+    rows.insert(rows.begin(), new_cols - max_col, {0, 0});
+    for (unsigned add = 1; add <= new_cols - max_col; ++add) {
+        cols.push_back({max_col + add, max_row + add});
+        rows[new_cols - max_col - add] = {max_row + add, max_col + add};
+    }
 }
 
-void SubpermutationMatrix::grow_front(unsigned new_rows) {
-    if (new_rows < rows) {
+void Permutation::grow_front(unsigned new_rows) {
+    unsigned max_row = rows[0].first;
+    if (new_rows <= max_row) {
         throw MatrixException("Growth query",
             "new row size " + std::to_string(new_rows));
     }
-    std::vector <unsigned> addition(new_rows - rows);
-    std::iota(addition.begin(), addition.end(), 1);
-    for (unsigned &old_element: matrix) {
-        old_element += addition.size();
+    for (auto &i: rows) {
+        i.first += (new_rows - max_row);
+        i.second += (new_rows - max_row);
     }
-    rows += addition.size();
-    cols += addition.size();
-    matrix[0] -= addition.size();
-    matrix.insert(matrix.begin() + 1, addition.begin(), addition.end());
+    for (auto &i: cols) {
+        i.first += (new_rows - max_row);
+        i.second += (new_rows - max_row);
+    }
+    cols.insert(cols.begin(), new_rows - max_row, {0, 0});
+    for (unsigned add = new_rows - max_row; add > 0; --add) {
+        cols[add - 1] = {add, add};
+        rows.push_back({add, add});
+    }
 }
 
 unsigned MongeMatrix::operator() (unsigned x, unsigned y) const {
@@ -317,7 +323,6 @@ public:
     }
 };
 
-// Recursively multiplies two permutations using the steady ant algorithm.
 Permutation multiply(const Permutation &p, const Permutation &q) {
     if (p.get_nonzero_amount() == 0 || q.get_nonzero_amount() == 0) {
         // If all elements are zeroes, the product is a zero as well.
@@ -348,6 +353,11 @@ Permutation multiply(const Permutation &p, const Permutation &q) {
     // lower than the ant scan for the other matrix.
     SteadyAnt ant = SteadyAnt(r_low, r_high);
     return ant.restore_correct_product();
+}
+
+// Recursively multiplies two permutations using the steady ant algorithm.
+Permutation Permutation::operator*(const Permutation &p) const {
+    return multiply(*this, p);
 }
 
 SubpermutationMatrix SubpermutationMatrix::operator*(

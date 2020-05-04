@@ -28,8 +28,8 @@ private:
     matrix::SubpermutationMatrix kernel;
     matrix::MongeMatrix kernel_sum;
 
-    matrix::SubpermutationMatrix calculate_kernel(unsigned a_l, unsigned a_r,
-                                                  unsigned b_l, unsigned b_r);
+    matrix::Permutation calculate_kernel(unsigned a_l, unsigned a_r,
+                                         unsigned b_l, unsigned b_r);
 };
 
 }  // namespace kernel

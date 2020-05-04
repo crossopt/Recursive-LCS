@@ -94,9 +94,6 @@ public:
     // maximum amount of nonzeroes in the subpermutation matrices.
     SubpermutationMatrix operator*(const SubpermutationMatrix &m) const;
 
-    void grow_front(unsigned new_rows);
-    void grow_back(unsigned new_cols);
-
     unsigned operator() (unsigned x, unsigned y) const override;
 };
 
@@ -123,6 +120,11 @@ public:
     std::vector <std::pair <unsigned, unsigned>> rows;
     // The list of permutation pairs, sorted by col index in ascending order.
     std::vector <std::pair <unsigned, unsigned>> cols;
+
+    Permutation operator*(const Permutation &p) const;
+
+    void grow_front(unsigned new_rows);
+    void grow_back(unsigned new_cols);
 };
 
 // Explicitly stores a simple subunit-Monge matrix.
