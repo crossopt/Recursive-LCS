@@ -1,12 +1,9 @@
 #ifndef INC_MONGE_MATRIX_H_
 #define INC_MONGE_MATRIX_H_
 
-#include <iostream>
-#include <utility>
 #include <vector>
 #include <exception>
 #include <string>
-#include <algorithm>
 
 namespace LCS {
 namespace matrix {
@@ -50,7 +47,7 @@ class MongeMatrix;
 // amount of non-zero elements in the matrix.
 // A subpermutation matrix is a a zero-one matrix with
 // no more than one non-zero element in every row and column.
-class SubpermutationMatrix: public MatrixInterface {
+class PermutationMatrix: public MatrixInterface {
 private:
     // Stores a single element for each row: the corresponding non-zero column.
     std::vector <unsigned> matrix;
@@ -67,7 +64,7 @@ public:
     // As half-integer indexing is not practical for coding, normal 0-based
     // indexing is used. However, the permutation is stored in 1-based indexing
     // to allow a 0 to correspond to a non-existing element for the ith row.
-    SubpermutationMatrix(unsigned rows,
+    PermutationMatrix(unsigned rows,
                          unsigned cols,
                          std::vector <unsigned> permutation):
             MatrixInterface(rows, cols), matrix(std::move(permutation)) {
@@ -80,33 +77,31 @@ public:
     // a simple subunit-Monge matrix iff the resulting matrix is
     // a subpermutation matrix.
     // Time complexity is O(rows * cols).
-    explicit SubpermutationMatrix(const MongeMatrix &distribution_matrix);
+    explicit PermutationMatrix(const MongeMatrix &distribution_matrix);
 
     // Slow sticky multiplication of two subpermutation matrices.
     // C = A * B if the cross-difference of the product
     // of the Monge matrices corresponding to A and B equals C.
     // The time complexity for the multiplication of
     // a n * m matrix by a m * k one is O(n * m * k).
-    SubpermutationMatrix operator^(const SubpermutationMatrix &m) const;
+    PermutationMatrix operator^(const PermutationMatrix &m) const;
 
     // Sticky multiplication of two subpermutation matrices.
     // O(n log n) using the Steady Ant algorithm, where n is the
     // maximum amount of nonzeroes in the subpermutation matrices.
-    SubpermutationMatrix operator*(const SubpermutationMatrix &m) const;
+    PermutationMatrix operator*(const PermutationMatrix &m) const;
 
     unsigned operator() (unsigned x, unsigned y) const override;
 };
 
 // Utility class for storing a permutation as a list of pairs. 
 class Permutation {
-private:
-    friend class PermutationIterator;
 public:
     explicit Permutation(const std::vector <std::pair <unsigned, unsigned> > &permutation_vector,
                          const std::vector <std::pair <unsigned, unsigned> > &rev_permutation_vector):
                         rows(permutation_vector),
                         cols(rev_permutation_vector) {}
-    explicit Permutation(const SubpermutationMatrix &m);
+    explicit Permutation(const PermutationMatrix &m);
     explicit Permutation() {}
 
     // Returns the amount of non-zero elements in the permutation.
@@ -115,31 +110,41 @@ public:
     std::pair<Permutation, Permutation> split_col() const;
     // Splits the permutation into two roughly equal halves by their row values.
     std::pair<Permutation, Permutation> split_row() const;
-    // Expands the permutation into a SubpermutationMatrix
+    // Expands the permutation into a PermutationMatrix
     // with the necessary amount of rows and columns.
-    SubpermutationMatrix expand(unsigned row_amount, unsigned col_amount) const;
+    PermutationMatrix expand(unsigned row_amount, unsigned col_amount) const;
 
     // The list of permutation pairs, sorted by row index in descending order.
     std::vector <std::pair <unsigned, unsigned>> rows;
     // The list of permutation pairs, sorted by col index in ascending order.
     std::vector <std::pair <unsigned, unsigned>> cols;
 
+    // Sticky multiplication of two permutation.
+    // O(n log n) using the Steady Ant algorithm, where n is the
+    // amount of elements in the permutation vectors.
     Permutation operator*(const Permutation &p) const;
 
+    // Adds an Id matrix to the beginning of the permutation
+    // so the new amount of rows in it is new_rows.
+    // All existing elements' indexes are incremented.
     void grow_front(unsigned new_rows);
+
+    // Adds an Id matrix to the beginning of the permutation
+    // so the new amount of cols in it is new_cols.
+    // All existing elements' indexes are left unchanged.
     void grow_back(unsigned new_cols);
 };
 
+// Utility class for iterating over permutations in the Steady Ant algorithm.
 class PermutationIterator {
 private:
     const Permutation &permutation;
-public:
     unsigned row_it;
     unsigned col_it;
-    explicit PermutationIterator(const Permutation &permutation): permutation(permutation), row_it(0), col_it(0) {}
-    // explicit PermutationIterator(const PermutationIterator &iterator): permutation(iterator.permutation),
-    //                                                                    row_it(iterator.row_it),
-    //                                                                    col_it(iterator.col_it) {}
+public:
+    explicit PermutationIterator(const Permutation &permutation): permutation(permutation),
+                                                                  row_it(0),
+                                                                  col_it(0) {}
 
     // Checks whether the iterator has passed the last row with permutation elements.
     bool has_row_ended() const {
@@ -151,33 +156,77 @@ public:
         return col_it == permutation.cols.size();
     }
 
+    // Increments the row iterator.
     void inc_row() {
         row_it++;
     }
+    // Increments the col iterator.
     void inc_col() {
         col_it++;
     }
 
+    // Returns the element the row iterator is pointing to.
     std::pair <unsigned, unsigned> row_pair() const {
         return permutation.rows[row_it];
     }
+    // Returns the element the col iterator is pointing to.
     std::pair <unsigned, unsigned> col_pair() const {
         return permutation.cols[col_it];
     }
 
+    // Returns the row of the element the row iterator is pointing to.
     unsigned row() const {
         return row_pair().first;
     }
+    // Returns the col of the element the col iterator is pointing to.
     unsigned col() const {
         return col_pair().first;
     }
 
+    // Returns the matching row of the element the col iterator is pointing to.
     unsigned matching_row() const {
         return col_pair().second;
     }
+    // Returns the matching col of the element the row iterator is pointing to.
     unsigned matching_col() const {
         return row_pair().second;
     }
+};
+
+// Utility class encapsulating the main logic of the ant traversal for two permutations.
+class SteadyAnt {
+private:
+    std::vector <std::pair <unsigned, unsigned>> good_elements_row;
+    std::vector <std::pair <unsigned, unsigned>> good_elements_col;
+
+    PermutationIterator low_it;  // ant-visible elements are lower-right
+    PermutationIterator high_it;  // ant-visible elements are upper-left
+
+    unsigned ant_row, ant_col;
+    unsigned min_row, max_col;
+
+    // Returns true if the ant can be moved up to the next row with permutation elements.
+    bool can_move_up() const;
+    // Returns true if the ant can be moved right to the next col with permutation elements.
+    bool can_move_right() const;
+
+    // Moves the ant up to the next row with permutation elements.
+    void move_up();
+    // Moves the ant right to the next col with permutation elements.
+    void move_right();
+
+    // Returns the next interesting row (with permutation elements) for the ant,
+    // or a fixed row smaller than all existing ones if all such rows have been visited.
+    unsigned get_next_row() const;
+    // Returns the next interesting column (with permutation elements) for the ant,
+    // or a fixed col smaller than all existing ones if all such cols have been visited.
+    unsigned get_next_col() const;
+public:
+    // Initializes the steady ant traversal for a pair of r_low, r_high permutation matrices.
+    SteadyAnt(const Permutation &r_low, const Permutation &r_high);
+
+    // Does the main ant traversal and returns the fixed permutation product.
+    Permutation restore_correct_product();
 };
 
 // Explicitly stores a simple subunit-Monge matrix.
@@ -206,7 +255,7 @@ public:
     // a subpermutation matrix iff the resulting matrix is
     // a simple subunit-Monge matrix.
     // Time complexity is O(rows * cols).
-    explicit MongeMatrix(const SubpermutationMatrix &density_matrix);
+    explicit MongeMatrix(const PermutationMatrix &density_matrix);
 
     // Multiplies two Monge matrices in the tropical semiring.
     // Addition is given by the min operator, multiplication by +.

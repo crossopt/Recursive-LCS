@@ -1,9 +1,5 @@
 #include "lcs_kernel.h"
 
-#include <utility>
-#include <vector>
-#include <exception>
-
 namespace LCS {
 namespace kernel {
 
@@ -29,7 +25,7 @@ matrix::Permutation LCSKernel::calculate_kernel(unsigned a_l, unsigned a_r,
         first_half.grow_front(sum_length);
         second_half.grow_back(sum_length);
         return first_half * second_half;
-    } else { // first string has length 1 (split by column)
+    } else {  // first string has length 1 (split by column)
         unsigned b_m  = (b_l + b_r) / 2;
         matrix::Permutation first_half = calculate_kernel(a_l, a_r, b_l, b_m);
         matrix::Permutation second_half = calculate_kernel(a_l, a_r, b_m, b_r);

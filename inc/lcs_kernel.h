@@ -1,15 +1,13 @@
 #ifndef INC_LCS_KERNEL_H_
 #define INC_LCS_KERNEL_H_
 
-#include <iostream>
-#include <string>
-#include <algorithm>
-
 #include "monge_matrix.h"
 
 namespace LCS {
 namespace kernel {
 
+// Class that calculates the LCS kernel for two strings using the basic recursive algorithm.
+// This allows it to solve the semi-local LCS problem for two strings a and b in O(|a||b|) time.
 class LCSKernel {
 public:
     // Initialize the LCS kernel for strings a and b.
@@ -25,9 +23,10 @@ public:
 private:
     const std::string &a;
     const std::string &b;
-    matrix::SubpermutationMatrix kernel;
+    matrix::PermutationMatrix kernel;
     matrix::MongeMatrix kernel_sum;
 
+    // Count the LCS kernel for two substrings of a and b recursively.
     matrix::Permutation calculate_kernel(unsigned a_l, unsigned a_r,
                                          unsigned b_l, unsigned b_r);
 };
