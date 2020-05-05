@@ -190,69 +190,60 @@ private:
     std::vector <std::pair <unsigned, unsigned>> good_elements_row;
     std::vector <std::pair <unsigned, unsigned>> good_elements_col;
 
-    const Permutation &low;  // ant-visible elements are lower-right
-    const Permutation &high;  // ant-visible elements are upper-left
-    std::vector <std::pair <unsigned, unsigned>>::const_iterator low_row_it;
-    std::vector <std::pair <unsigned, unsigned>>::const_iterator high_row_it;
-    std::vector <std::pair <unsigned, unsigned>>::const_iterator low_col_it;
-    std::vector <std::pair <unsigned, unsigned>>::const_iterator high_col_it;
+    PermutationIterator low_it;  // ant-visible elements are lower-right
+    PermutationIterator high_it;  // ant-visible elements are upper-left
+
     unsigned ant_row, ant_col;
     unsigned min_row, max_col;
-
-    // Checks whether the ant has passed the last row with permutation elements.
-    bool have_rows_ended() const {
-        return low_row_it == low.rows.end() && high_row_it == high.rows.end();
-    }
-
-    // Checks whether the ant has passed the last col with permutation elements.
-    bool have_cols_ended() const {
-        return low_col_it == low.cols.end() && high_col_it == high.cols.end();
-    }
 
     // Try to move the ant up.
     // It might stop seeing a bad R_high value, or see a new bad R_low value.
     // If this happens, the balance is broken and the ant can not move up.
     bool can_move_up() const {
-        for (auto high_it = high_row_it; high_it != high.rows.end() && high_it->first == ant_row; ++high_it) {
-            if (high_it->second < ant_col) {
+        PermutationIterator new_high(high_it);
+        PermutationIterator new_low(low_it);
+        for (; !new_high.has_row_ended() && new_high.row() == ant_row; new_high.inc_row()) {
+            if (new_high.matching_col() < ant_col) {
                 return false;
             }
         }
-        for (auto low_it = low_row_it; low_it != low.rows.end() && low_it->first == ant_row; ++low_it) {
-            if (low_it->second >= ant_col) {
+        for (; !new_low.has_row_ended() && new_low.row() == ant_row; new_low.inc_row()) {
+            if (new_low.matching_col() >= ant_col) {
                 return false;
             }
         }
-        return !have_rows_ended();
+        return !high_it.has_row_ended() || !low_it.has_row_ended();
     }
 
     // Try to move the ant right.
     // It might stop seeing a bad R_low value, or see a new bad R_high value.
     // If this happens, the balance is broken and the ant can not move right.
     bool can_move_right() const {
-        for (auto high_it = high_col_it; high_it != high.cols.end() && high_it->first == ant_col; ++high_it) {
-            if (high_it->second <= ant_row) {
+        PermutationIterator new_high(high_it);
+        PermutationIterator new_low(low_it);
+        for (; !new_high.has_col_ended() && new_high.col() == ant_col; new_high.inc_col()) {
+            if (new_high.matching_row() <= ant_row) {
                 return false;
             }
         }
-        for (auto low_it = low_col_it; low_it != low.cols.end() && low_it->first == ant_col; ++low_it) {
-            if (low_it->second > ant_row) {
+        for (; !new_low.has_col_ended() && new_low.col() == ant_col; new_low.inc_col()) {
+            if (new_low.matching_row() > ant_row) {
                 return false;
             }
         }
-        return !have_cols_ended();
+        return !high_it.has_col_ended() || !low_it.has_col_ended();
     }
 
     // Moves the ant up to the next row with permutation elements.
     void move_up() {
-        for (; high_row_it != high.rows.end() && high_row_it->first == ant_row; ++high_row_it) {
-            if (high_row_it->second >= ant_col) {
-                good_elements_row.push_back(*high_row_it);
+        for (; !high_it.has_row_ended() && high_it.row() == ant_row; high_it.inc_row()) {
+            if (high_it.matching_col() >= ant_col) {
+                good_elements_row.push_back(high_it.row_pair());
             }
         }
-        for (; low_row_it != low.rows.end() && low_row_it->first == ant_row; ++low_row_it) {
-            if (low_row_it->second < ant_col) {
-                good_elements_row.push_back(*low_row_it);
+        for (; !low_it.has_row_ended() && low_it.row() == ant_row; low_it.inc_row()) {
+            if (low_it.matching_col() < ant_col) {
+                good_elements_row.push_back(low_it.row_pair());
             }
         }
         ant_row = get_next_row();
@@ -260,14 +251,14 @@ private:
 
     // Moves the ant right to the next col with permutation elements.
     void move_right() {
-        for (; high_col_it != high.cols.end() && high_col_it->first == ant_col; ++high_col_it) {
-            if (high_col_it->second > ant_row) {
-                good_elements_col.push_back(*high_col_it);
+        for (; !high_it.has_col_ended() && high_it.col() == ant_col; high_it.inc_col()) {
+            if (high_it.matching_row() > ant_row) {
+                good_elements_col.push_back(high_it.col_pair());
             }
         }
-        for (; low_col_it != low.cols.end() && low_col_it->first == ant_col; ++low_col_it) {
-            if (low_col_it->second <= ant_row) {
-                good_elements_col.push_back(*low_col_it);
+        for (; !low_it.has_col_ended() && low_it.col() == ant_col; low_it.inc_col()) {
+            if (low_it.matching_row() <= ant_row) {
+                good_elements_col.push_back(low_it.col_pair());
             }
         }
         ant_col = get_next_col();
@@ -276,28 +267,25 @@ private:
     // Returns the next interesting row (with permutation elements) for the ant,
     // or a fixed row smaller than all existing ones if all such rows have been visited.
     unsigned get_next_row() const {
-        return std::max(low_row_it == low.rows.end() ? min_row : low_row_it->first, 
-                        high_row_it == high.rows.end() ? min_row : high_row_it->first);
+        return std::max(low_it.has_row_ended() ? min_row : low_it.row(), 
+                        high_it.has_row_ended() ? min_row : high_it.row());
     }
 
     // Returns the next interesting column (with permutation elements) for the ant,
     // or a fixed col smaller than all existing ones if all such cols have been visited.
     unsigned get_next_col() const {
-        return std::min(low_col_it == low.cols.end() ? max_col : low_col_it->first, 
-                        high_col_it == high.cols.end() ? max_col : high_col_it->first);
+        return std::min(low_it.has_col_ended() ? max_col : low_it.col(), 
+                        high_it.has_col_ended() ? max_col : high_it.col());
     }
 public:
     // Initializes the steady ant traversal for a pair of r_low, r_high permutation matrices.
-    SteadyAnt(const Permutation &r_low, const Permutation &r_high): low(r_low), high(r_high) {
-        low_row_it = low.rows.begin();
-        high_row_it = high.rows.begin();
-        low_col_it = low.cols.begin();
-        high_col_it = high.cols.begin();
+    SteadyAnt(const Permutation &r_low, const Permutation &r_high): low_it(PermutationIterator(r_low)),
+                                                                    high_it(PermutationIterator(r_high)) {
 
-        min_row = std::min(low.rows.size() ? low.rows.back().first : 1, 
-                           high.rows.size() ? high.rows.back().first : 1) - 1;
-        max_col = std::max(low.cols.size() ? low.cols.back().first : 1, 
-                           high.cols.size() ? high.cols.back().first : 1) + 1;
+        min_row = std::min(r_low.rows.size() ? r_low.rows.back().first : 1, 
+                           r_high.rows.size() ? r_high.rows.back().first : 1) - 1;
+        max_col = std::max(r_low.cols.size() ? r_low.cols.back().first : 1, 
+                           r_high.cols.size() ? r_high.cols.back().first : 1) + 1;
     }
 
     // Does the main ant traversal and returns the fixed permutation product.
@@ -306,7 +294,7 @@ public:
         // This is the pair of indexes before which the ant is currently located.
         ant_row = get_next_row();
         ant_col = get_next_col();
-        while (!have_rows_ended() || !have_cols_ended()) {
+        while (ant_row != min_row || ant_col != max_col) {
             if (can_move_up()) {
                 move_up();
             } else if (can_move_right()) {

@@ -99,12 +99,15 @@ public:
 
 // Utility class for storing a permutation as a list of pairs. 
 class Permutation {
+private:
+    friend class PermutationIterator;
 public:
     explicit Permutation(const std::vector <std::pair <unsigned, unsigned> > &permutation_vector,
                          const std::vector <std::pair <unsigned, unsigned> > &rev_permutation_vector):
                         rows(permutation_vector),
                         cols(rev_permutation_vector) {}
     explicit Permutation(const SubpermutationMatrix &m);
+    explicit Permutation() {}
 
     // Returns the amount of non-zero elements in the permutation.
     unsigned get_nonzero_amount() const {return rows.size(); }
@@ -125,6 +128,56 @@ public:
 
     void grow_front(unsigned new_rows);
     void grow_back(unsigned new_cols);
+};
+
+class PermutationIterator {
+private:
+    const Permutation &permutation;
+public:
+    unsigned row_it;
+    unsigned col_it;
+    explicit PermutationIterator(const Permutation &permutation): permutation(permutation), row_it(0), col_it(0) {}
+    // explicit PermutationIterator(const PermutationIterator &iterator): permutation(iterator.permutation),
+    //                                                                    row_it(iterator.row_it),
+    //                                                                    col_it(iterator.col_it) {}
+
+    // Checks whether the iterator has passed the last row with permutation elements.
+    bool has_row_ended() const {
+        return row_it == permutation.rows.size();
+    }
+
+    // Checks whether the iterator has passed the last col with permutation elements.
+    bool has_col_ended() const {
+        return col_it == permutation.cols.size();
+    }
+
+    void inc_row() {
+        row_it++;
+    }
+    void inc_col() {
+        col_it++;
+    }
+
+    std::pair <unsigned, unsigned> row_pair() const {
+        return permutation.rows[row_it];
+    }
+    std::pair <unsigned, unsigned> col_pair() const {
+        return permutation.cols[col_it];
+    }
+
+    unsigned row() const {
+        return row_pair().first;
+    }
+    unsigned col() const {
+        return col_pair().first;
+    }
+
+    unsigned matching_row() const {
+        return col_pair().second;
+    }
+    unsigned matching_col() const {
+        return row_pair().second;
+    }
 };
 
 // Explicitly stores a simple subunit-Monge matrix.
