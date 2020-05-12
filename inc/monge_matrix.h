@@ -101,6 +101,7 @@ public:
                          const std::vector <std::pair <unsigned, unsigned> > &rev_permutation_vector):
                         rows(permutation_vector),
                         cols(rev_permutation_vector) {}
+    explicit Permutation(const std::vector<unsigned> &permutation);
     explicit Permutation(const PermutationMatrix &m);
     explicit Permutation() {}
 

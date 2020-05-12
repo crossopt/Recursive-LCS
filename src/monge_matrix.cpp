@@ -133,6 +133,14 @@ Permutation::Permutation(const PermutationMatrix &m) {
     }
 }
 
+Permutation::Permutation(const std::vector<unsigned> &permutation) {
+    cols.resize(permutation.size());
+    for (int row = permutation.size(); row > 0; --row) {
+        rows.push_back({row, permutation[row - 1]});
+        cols[permutation[row - 1] - 1] = {permutation[row - 1], row};
+    }
+}
+
 PermutationMatrix Permutation::expand(unsigned row_amount, unsigned col_amount) const {
     std::vector <unsigned> subpermutation(row_amount, 0);
     for (const auto &permutation_pair: rows) {

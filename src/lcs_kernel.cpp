@@ -46,18 +46,47 @@ unsigned LCSKernel::lcs_prefix_a_suffix_b(unsigned a_r, unsigned b_l) const {
     return b.size() - b_l - kernel_sum(b_l + a.size(), a.size() + b.size() - a_r);
 }
 
+matrix::Permutation RecursiveLCS::calculate_recursion_base(const std::string &a,
+                                                           const std::string &b,
+                                                           unsigned a_l, unsigned a_r,
+                                                           unsigned b_l, unsigned b_r) {
+    std::vector <unsigned> last_row(b_r - b_l); //  The index of the braid strand at the end of row i.
+    std::vector <unsigned> last_col(a_r - a_l); //  The index of the braid strand at the end of col i.
+    std::iota(last_row.begin(), last_row.end(), a_r - a_l);
+    for (unsigned i = a_l; i < a_r; ++i) {
+        last_col[i] = a_r - i - 1;
+        for (unsigned j = b_l; j < b_r; ++j) {
+            // The braid strands should not cross if the string symbols match,
+            // or if they have already crossed previously.
+            // They have crossed previously if the natural ordering is ruined.
+            if (a[i] == b[j] || last_col[i] > last_row[j]) {
+                std::swap(last_col[i], last_row[j]);  // uncross the two strands
+            }
+        }
+    }
+    // Restore the kernel permutation from the braid.
+    std::vector <unsigned> result(a_r - a_l + b_r - b_l);
+    for (unsigned i = 0; i < a_r - a_l; ++i) {
+        result[last_col[i]] = a_r - a_l + b_r - b_l - i;
+    }
+    for (unsigned i = 0; i < b_r - b_l; ++i) {
+        result[last_row[i]] = i + 1;
+    }
+    return matrix::Permutation{result};
+}
+
 matrix::Permutation RecursiveLCS::calculate_kernel(const std::string &a,
                                                    const std::string &b,
                                                    unsigned a_l, unsigned a_r,
                                                    unsigned b_l, unsigned b_r) {
     unsigned sum_length = a_r - a_l + b_r - b_l;
     if (a_l >= a_r || b_l >= b_r) {
-        return matrix::Permutation{{{1, 1}}, {{1, 1}}};
+        return matrix::Permutation{{1}};
     } else if (a_l + 1 == a_r && b_l + 1 == b_r) {
         if (a[a_l] == b[b_l]) {
-            return matrix::Permutation{{{2, 2}, {1, 1}}, {{1, 1}, {2, 2}}};
+            return matrix::Permutation{{1, 2}};
         } else {
-            return matrix::Permutation{{{2, 1}, {1, 2}}, {{1, 2}, {2, 1}}};
+            return matrix::Permutation{{2, 1}};
         }
     } else if (a_l + 1 < a_r) {  // split by row
         unsigned a_m  = (a_l + a_r) / 2;

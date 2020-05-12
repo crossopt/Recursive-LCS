@@ -39,6 +39,10 @@ private:
     matrix::Permutation calculate_kernel(const std::string &a, const std::string &b, 
                                          unsigned a_l, unsigned a_r,
                                          unsigned b_l, unsigned b_r);
+    // Count the LCS kernel for two substrings of a and b recursively using iterative combing.
+    matrix::Permutation calculate_recursion_base(const std::string &a, const std::string &b, 
+                                         unsigned a_l, unsigned a_r,
+                                         unsigned b_l, unsigned b_r);
 };
 
 // Class that calculates the LCS kernel for two strings using iterative combing.
