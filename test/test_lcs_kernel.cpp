@@ -67,6 +67,20 @@ TEST(KernelTest, CalculateRecursiveLCSSuffixPrefixTest) {
     test_lcs_suffix_a_prefix_b(RecursiveLCS("AAAAAAAAAAA", "AAAAAAAAA"), "AAAAAAAAAAA", "AAAAAAAAA");
 }
 
+TEST(KernelTest, CalculateRecursiveLCSLargeBaseTest) {
+    test_whole_a(RecursiveLCS("830357856875499", "80036944925921", 1000), "830357856875499", "80036944925921");
+    test_whole_b(RecursiveLCS("830357856875499", "80036944925921", 1000), "830357856875499", "80036944925921");
+    test_lcs_prefix_a_suffix_b(RecursiveLCS("830357856875499", "80036944925921", 1000), "830357856875499", "80036944925921");
+    test_lcs_suffix_a_prefix_b(RecursiveLCS("830357856875499", "80036944925921", 1000), "830357856875499", "80036944925921");
+}
+
+TEST(KernelTest, CalculateRecursiveLCSSmallBaseTest) {
+    test_whole_a(RecursiveLCS("8303578568754", "800369449259217", 2), "8303578568754", "800369449259217");
+    test_whole_b(RecursiveLCS("8303578568754", "800369449259217", 2), "8303578568754", "800369449259217");
+    test_lcs_prefix_a_suffix_b(RecursiveLCS("8303578568754", "800369449259217", 2), "8303578568754", "800369449259217");
+    test_lcs_suffix_a_prefix_b(RecursiveLCS("8303578568754", "800369449259217", 2), "8303578568754", "800369449259217");
+}
+
 TEST(KernelTest, CalculateIterativeLCSWholeFirstStringTest) {
     test_whole_a(IterativeLCS("BAABCBCA", "BAABCABCABACA"), "BAABCBCA", "BAABCABCABACA");
     test_whole_a(IterativeLCS("xvuy", "uyxv"), "xvuy", "uyxv");

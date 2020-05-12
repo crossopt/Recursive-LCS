@@ -33,10 +33,13 @@ protected:
 class RecursiveLCS: public LCSKernel {
 public:
     // Initialize the LCS kernel for strings a and b.
-    RecursiveLCS(const std::string &a, const std::string &b);
+    // Use the recursive algorithm.
+    // If athe strings' summary length is less than recusion_base, use iterative combing.
+    RecursiveLCS(const std::string &a, const std::string &b, unsigned recursion_base = 5);
 private:
     // Count the LCS kernel for two substrings of a and b recursively.
-    matrix::Permutation calculate_kernel(const std::string &a, const std::string &b, 
+    matrix::Permutation calculate_kernel(unsigned recursion_base,
+                                         const std::string &a, const std::string &b, 
                                          unsigned a_l, unsigned a_r,
                                          unsigned b_l, unsigned b_r);
     // Count the LCS kernel for two substrings of a and b recursively using iterative combing.

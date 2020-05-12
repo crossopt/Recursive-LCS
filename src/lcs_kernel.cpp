@@ -25,10 +25,12 @@ LCSKernel::LCSKernel(const std::string &a, const std::string &b, const matrix::M
                                                                                     b(b),
                                                                                     kernel_sum(kernel_sum) {}
 
-RecursiveLCS::RecursiveLCS(const std::string &a, const std::string &b): LCSKernel(a, b,
-    matrix::MongeMatrix(calculate_kernel(a, b, 0, a.size(), 0, b.size()).expand(a.size() + b.size(), a.size() + b.size()))) {}
+RecursiveLCS::RecursiveLCS(const std::string &a, const std::string &b, unsigned recursion_base): LCSKernel(a, b,
+    matrix::MongeMatrix(calculate_kernel(recursion_base, a, b, 0, a.size(), 0, b.size())
+                                            .expand(a.size() + b.size(), a.size() + b.size()))) {}
 
-IterativeLCS::IterativeLCS(const std::string &a, const std::string &b): LCSKernel(a, b, calculate_iterative_kernel(a, b)) {}
+IterativeLCS::IterativeLCS(const std::string &a, const std::string &b):
+                                            LCSKernel(a, b, calculate_iterative_kernel(a, b)) {}
 
 unsigned LCSKernel::lcs_whole_a(unsigned b_l, unsigned b_r) const {
     return b_r - b_l - kernel_sum(b_l + a.size(), b_r);
@@ -54,13 +56,13 @@ matrix::Permutation RecursiveLCS::calculate_recursion_base(const std::string &a,
     std::vector <unsigned> last_col(a_r - a_l); //  The index of the braid strand at the end of col i.
     std::iota(last_row.begin(), last_row.end(), a_r - a_l);
     for (unsigned i = a_l; i < a_r; ++i) {
-        last_col[i] = a_r - i - 1;
+        last_col[i - a_l] = a_r - i - 1;
         for (unsigned j = b_l; j < b_r; ++j) {
             // The braid strands should not cross if the string symbols match,
             // or if they have already crossed previously.
             // They have crossed previously if the natural ordering is ruined.
-            if (a[i] == b[j] || last_col[i] > last_row[j]) {
-                std::swap(last_col[i], last_row[j]);  // uncross the two strands
+            if (a[i] == b[j] || last_col[i - a_l] > last_row[j - b_l]) {
+                std::swap(last_col[i - a_l], last_row[j - b_l]);  // uncross the two strands
             }
         }
     }
@@ -75,30 +77,25 @@ matrix::Permutation RecursiveLCS::calculate_recursion_base(const std::string &a,
     return matrix::Permutation{result};
 }
 
-matrix::Permutation RecursiveLCS::calculate_kernel(const std::string &a,
+matrix::Permutation RecursiveLCS::calculate_kernel(unsigned recursion_base,
+                                                   const std::string &a,
                                                    const std::string &b,
                                                    unsigned a_l, unsigned a_r,
                                                    unsigned b_l, unsigned b_r) {
     unsigned sum_length = a_r - a_l + b_r - b_l;
-    if (a_l >= a_r || b_l >= b_r) {
-        return matrix::Permutation{{1}};
-    } else if (a_l + 1 == a_r && b_l + 1 == b_r) {
-        if (a[a_l] == b[b_l]) {
-            return matrix::Permutation{{1, 2}};
-        } else {
-            return matrix::Permutation{{2, 1}};
-        }
+    if (sum_length <= recursion_base) {
+        return calculate_recursion_base(a, b, a_l, a_r, b_l, b_r);
     } else if (a_l + 1 < a_r) {  // split by row
         unsigned a_m  = (a_l + a_r) / 2;
-        matrix::Permutation first_half = calculate_kernel(a, b, a_l, a_m, b_l, b_r);
-        matrix::Permutation second_half = calculate_kernel(a, b, a_m, a_r, b_l, b_r);
+        matrix::Permutation first_half = calculate_kernel(recursion_base, a, b, a_l, a_m, b_l, b_r);
+        matrix::Permutation second_half = calculate_kernel(recursion_base, a, b, a_m, a_r, b_l, b_r);
         first_half.grow_front(sum_length);
         second_half.grow_back(sum_length);
         return first_half * second_half;
     } else {  // first string has length 1 (split by column)
         unsigned b_m  = (b_l + b_r) / 2;
-        matrix::Permutation first_half = calculate_kernel(a, b, a_l, a_r, b_l, b_m);
-        matrix::Permutation second_half = calculate_kernel(a, b, a_l, a_r, b_m, b_r);
+        matrix::Permutation first_half = calculate_kernel(recursion_base, a, b, a_l, a_r, b_l, b_m);
+        matrix::Permutation second_half = calculate_kernel(recursion_base, a, b, a_l, a_r, b_m, b_r);
         first_half.grow_back(sum_length);
         second_half.grow_front(sum_length);
         return first_half * second_half;
