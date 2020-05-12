@@ -3,8 +3,6 @@
 
 #include "lcs_kernel.h"
 
-using namespace std;
-
 int main() {
 	std::cout << "Enter two strings in separate lines:" << std::endl;
 	std::string a, b;

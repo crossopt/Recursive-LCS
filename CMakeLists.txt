@@ -20,6 +20,9 @@ target_link_libraries(llcs ${Boost_LIBRARIES})
 add_executable(lcs main.cpp)
 target_link_libraries(lcs llcs)
 
+add_executable(time_test time_test.cpp)
+target_link_libraries(time_test llcs)
+
 #GTest
 enable_testing()
 include(GoogleTest)
