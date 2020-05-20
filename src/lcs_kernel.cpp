@@ -125,6 +125,9 @@ matrix::MongeMatrix IterativeLCS::calculate_iterative_kernel(const std::string &
     for (unsigned i = 0; i < b.size(); ++i) {
         result[last_row[i]] = i + 1;
     }
+    std::cout << "ITERATIVE RESULT:  ";
+    for (auto i : result) std::cout << i << ' ';
+        std::cout << '\n';
     return matrix::MongeMatrix(matrix::PermutationMatrix(result.size(), result.size(), result));
 }
 

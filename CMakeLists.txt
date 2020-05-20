@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Werror -pedant
 set(SOURCES
     src/monge_matrix.cpp
     src/lcs_kernel.cpp
+    src/fibonacci.cpp
 )
 
 include_directories(inc/)
@@ -30,8 +31,7 @@ add_subdirectory(google_test)
 
 set(TEST_SOURCES
     test/main.cpp
-    test/test_lcs_kernel.cpp
-    test/test_monge_matrix.cpp
+    test/test_fibonacci.cpp
 )
 
 add_executable(lcs_test ${TEST_SOURCES})

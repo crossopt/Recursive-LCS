@@ -65,9 +65,11 @@ unsigned PermutationMatrix::operator() (unsigned x, unsigned y) const {
 // Grows the permutation to the required size by adding trivial elements to its end.
 // Takes O(new_size) time.
 void Permutation::grow_back(unsigned new_cols) {
-    unsigned max_row = rows[0].first;
     unsigned max_col = cols.back().first;
-    if (new_cols <= max_col) {
+    unsigned max_row = rows[0].first;
+    if (new_cols == max_col) {
+        return;
+    } else if (new_cols < max_col) {
         throw MatrixException("Growth query",
             "new column size " + std::to_string(new_cols));
     }
@@ -82,7 +84,9 @@ void Permutation::grow_back(unsigned new_cols) {
 // Takes O(new_size) time.
 void Permutation::grow_front(unsigned new_rows) {
     unsigned max_row = rows[0].first;
-    if (new_rows <= max_row) {
+    if (new_rows == max_row) {
+        return;
+    } else if (new_rows <= max_row) {
         throw MatrixException("Growth query",
             "new row size " + std::to_string(new_rows));
     }
@@ -133,11 +137,17 @@ Permutation::Permutation(const PermutationMatrix &m) {
     }
 }
 
+// TODO MAKE BETTER
 Permutation::Permutation(const std::vector<unsigned> &permutation) {
-    cols.resize(permutation.size());
+    cols.resize(permutation.size() + 1, {0, 0});
     for (int row = permutation.size(); row > 0; --row) {
         rows.push_back({row, permutation[row - 1]});
         cols[permutation[row - 1] - 1] = {permutation[row - 1], row};
+    }
+    for (unsigned i = 0; i < cols.size(); ++i) {
+        if (cols[i].first == 0) {
+            cols.erase(cols.begin() + i);
+        }
     }
 }
 
