@@ -15,11 +15,14 @@ public:
     FibonacciKernel(const std::string &p, int fn);
     const std::string p;
     const int fn;
-    std::pair <matrix::Permutation, matrix::Permutation> kernel;
+
+    const unsigned lca;
+    // matrix::Permutation kernel;
 private:
 
-    std::pair <matrix::Permutation, matrix::Permutation> calculate_kernel(const std::string &p, int fn);
-    std::pair <matrix::Permutation, matrix::Permutation> calculate_char_kernel(const std::string &p, char c);
+    unsigned calculate_lca(const std::string &p, int fn);
+    matrix::Permutation calculate_count_kernel(const std::string &p, int fn, int &fm);
+    matrix::Permutation calculate_char_kernel(const std::string &p, char c);
 };
 
 
