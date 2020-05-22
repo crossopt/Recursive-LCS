@@ -160,9 +160,8 @@ PermutationMatrix Permutation::expand(unsigned row_amount, unsigned col_amount) 
 }
 
 // Returns a pair of two permutations, where the first one has
-// the (n + 1) / 2 smallest row element values.
-std::pair<Permutation, Permutation> Permutation::split_row() const {
-    unsigned split_value = rows[rows.size() / 2].first;
+// the row values no greater than split_value.
+std::pair<Permutation, Permutation> Permutation::split_row(unsigned split_value) const {
     std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
     std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
     for (const auto &matched_pair: rows) {
@@ -185,9 +184,8 @@ std::pair<Permutation, Permutation> Permutation::split_row() const {
 }
 
 // Returns a pair of two permutations, where the first one has
-// the (n + 1) / 2 smallest column element values.
-std::pair<Permutation, Permutation> Permutation::split_col() const {
-    unsigned split_value = cols[(cols.size() - 1) / 2].first;
+// the column values no greater than split_value.
+std::pair<Permutation, Permutation> Permutation::split_col(unsigned split_value) const {
     std::vector <std::pair <unsigned, unsigned> > row_first, row_second;
     std::vector <std::pair <unsigned, unsigned> > col_first, col_second;
     for (const auto &matched_pair: rows) {
@@ -339,8 +337,8 @@ Permutation multiply(const Permutation &p, const Permutation &q) {
     // Split the first matrix by cols and the second by rows on the same it
     //  and remove all zeroes from the permutation halves (ie permutation pairs
     // from one half into the other).
-    auto p_split = p.split_col();
-    auto q_split = q.split_row();
+    auto p_split = p.split_col(p.cols[(p.cols.size() - 1) / 2].first);
+    auto q_split = q.split_row(q.rows[q.rows.size() / 2].first);
     // Recursively multiply two pairs of permutations.
     Permutation r_low = multiply(p_split.first, q_split.first);
     Permutation r_high = multiply(p_split.second, q_split.second);

@@ -107,10 +107,10 @@ public:
 
     // Returns the amount of non-zero elements in the permutation.
     unsigned get_nonzero_amount() const {return rows.size(); }
-    // Splits the permutation into two roughly equal halves by their column values.
-    std::pair<Permutation, Permutation> split_col() const;
-    // Splits the permutation into two roughly equal halves by their row values.
-    std::pair<Permutation, Permutation> split_row() const;
+    // Splits the permutation into two halves by their column values.
+    std::pair<Permutation, Permutation> split_col(unsigned split_value) const;
+    // Splits the permutation into two halves by their row values.
+    std::pair<Permutation, Permutation> split_row(unsigned split_value) const;
     // Expands the permutation into a PermutationMatrix
     // with the necessary amount of rows and columns.
     PermutationMatrix expand(unsigned row_amount, unsigned col_amount) const;

@@ -16,11 +16,11 @@ public:
     const std::string p;
     const int fn;
 
-    const unsigned lca;
+    const unsigned lcs;
     // matrix::Permutation kernel;
 private:
 
-    unsigned calculate_lca(const std::string &p, int fn);
+    unsigned calculate_lcs(const std::string &p, int fn);
     matrix::Permutation calculate_count_kernel(const std::string &p, int fn, int &fm);
     matrix::Permutation calculate_char_kernel(const std::string &p, char c);
 };
