@@ -6,12 +6,12 @@
 #include <numeric>
 
 namespace LCS {
-namespace fkernel {
+namespace gc {
 
-FibonacciKernel::FibonacciKernel(const std::string &p, int fn): p(p), fn(fn), lcs(calculate_lcs(p, fn)) {}
+GCKernel::GCKernel(const std::string &p, const GrammarCompressed &t): lcs(calculate_lcs(p, t)) {}
 
 
-matrix::Permutation FibonacciKernel::calculate_char_kernel(const std::string &p, char c) {
+matrix::Permutation GCKernel::calculate_char_kernel(const std::string &p, char c) {
     unsigned last_row = p.size();
     std::vector <unsigned> last_col(p.size());
     for (unsigned i = 0; i < p.size(); ++i) {
@@ -81,24 +81,14 @@ matrix::Permutation combine(matrix::Permutation &left_side,
 }
 
 
-matrix::Permutation FibonacciKernel::calculate_count_kernel(const std::string &p, int fn, int &fm) {
-    if (fn == 0) { // string A
+matrix::Permutation GCKernel::calculate_count_kernel(const std::string &p, const GrammarCompressed &t, int &fm) {
+    if (t.is_base) { // t is a single symbol
         fm = 1;
-        return calculate_char_kernel(p, 'A');
-    } else if (fn == 1) { // string AB
-        int x1 = 0;
-        auto first_half = calculate_count_kernel(p, fn - 1, x1);
-        auto second_half = calculate_char_kernel(p, 'B');
-        fm = x1 + 1;
-
-        auto to_right = get_right(first_half, x1);
-        auto from_left = get_left(second_half, p.size());
-        auto intersection = to_right.second * from_left.first;
-        return combine(to_right.first, intersection, from_left.second, x1);
-    } else {  // F_{fn} = F_{fn - 1} + F_{fn - 2}
+        return calculate_char_kernel(p, t.value);
+    } else { // t = uv
         int x1 = 0, x2 = 0;
-        auto first_half = calculate_count_kernel(p, fn - 1, x1);
-        auto second_half = calculate_count_kernel(p, fn - 2, x2);
+        auto first_half = calculate_count_kernel(p, *t.first_symbol, x1);
+        auto second_half = calculate_count_kernel(p, *t.second_symbol, x2);
         fm = x1 + x2;
 
         auto to_right = get_right(first_half, x1);
@@ -108,9 +98,9 @@ matrix::Permutation FibonacciKernel::calculate_count_kernel(const std::string &p
     }
 }
 
-unsigned FibonacciKernel::calculate_lcs(const std::string &p, int fn) {
+unsigned GCKernel::calculate_lcs(const std::string &p, const GrammarCompressed &t) {
     int size = 0;
-    auto kernel = calculate_count_kernel(p, fn, size);
+    auto kernel = calculate_count_kernel(p, t, size);
     unsigned count_dom = 0;
     for (auto i: kernel.rows) {
         count_dom += (i.first <= p.size() && i.second > (unsigned)size);
