@@ -13,7 +13,7 @@ using std::chrono::milliseconds;
 
 std::string generate_random_string(unsigned length) {
     auto randchar = []() -> char {
-        const size_t max_index = 26;
+        const size_t max_index = 5;
         return 'A' + rand() % max_index;
     };
     std::string result(length, 0);
@@ -53,8 +53,8 @@ void test_strings(const std::string &a, unsigned b_number) {
     std::string b_string = b.decompress();
     std::cout << "Times for LCS calculation for string lengths " << a.size() << " and " << b_string.size() << ":" << std::endl;
     auto dp_time = time_dp(a, b_string);
-    std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
     auto recursive_time = time_recursive(a, b);
+    std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
     std::cout << "Time for recursive kernel is " << recursive_time << "ms" << std::endl;
 }
 
@@ -68,16 +68,34 @@ void test_recursive(const std::string &a, unsigned b_number) {
 
 
 int main() {
-    test_strings(generate_random_string(3), 10);
-    test_strings(generate_random_string(5), 10);
-    test_strings(generate_random_string(3), 30);
+    test_strings(generate_random_string(4), 10);
+    test_strings(generate_random_string(16), 10);
+    test_strings(generate_random_string(64), 10);
+    test_strings(generate_random_string(256), 10);
 
-    test_recursive(generate_random_string(3), 40);
-    test_recursive(generate_random_string(3), 50);
-    test_recursive(generate_random_string(3), 60);
+    test_strings(generate_random_string(4), 20);
+    test_strings(generate_random_string(16), 20);
+    test_strings(generate_random_string(64), 20);
+    test_strings(generate_random_string(256), 20);
 
-    // test_recursive(generate_random_string(5), 40);
-    // test_recursive(generate_random_string(5), 50);
-    // test_recursive(generate_random_string(5), 60);
+    test_strings(generate_random_string(4), 30);
+    test_strings(generate_random_string(16), 30);
+    test_strings(generate_random_string(64), 30);
+    test_strings(generate_random_string(256), 30);
+
+    test_recursive(generate_random_string(4), 40);
+    test_recursive(generate_random_string(16), 40);
+    test_recursive(generate_random_string(64), 40);
+    test_recursive(generate_random_string(256), 40);
+
+    test_recursive(generate_random_string(4), 50);
+    test_recursive(generate_random_string(16), 50);
+    test_recursive(generate_random_string(64), 50);
+    test_recursive(generate_random_string(256), 50);
+
+    test_recursive(generate_random_string(4), 60);
+    test_recursive(generate_random_string(16), 60);
+    test_recursive(generate_random_string(64), 60);
+    test_recursive(generate_random_string(256), 60);
     return 0;
 }
