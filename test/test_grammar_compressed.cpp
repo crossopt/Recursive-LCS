@@ -6,7 +6,7 @@
 #include "gtest/gtest.h"
 #include "monge_matrix.h"
 #include "lcs_kernel.h"
-#include "fibonacci.h"
+#include "grammar_compressed.h"
 
 namespace LCS {
 namespace gc {
@@ -24,16 +24,16 @@ std::string fib_string(int n) {
 
 GrammarCompressed gc_fib_string(unsigned length) {
     if (length == 0) {
-        return GrammarCompressed('A');
+        return GrammarCompressed(length + 1, 'A');
     } else if (length == 1) {
-        return GrammarCompressed(gc_fib_string(0), GrammarCompressed('B'));
+        return GrammarCompressed(length + 1, gc_fib_string(0), GrammarCompressed(0, 'B'));
     } else {
         GrammarCompressed prev = gc_fib_string(length - 1);
-        return GrammarCompressed(prev, *prev.first_symbol);
+        return GrammarCompressed(length + 1, prev, *prev.first_symbol);
     }
 }
 
-TEST(FibonacciTest, CalculateKernelLengthOneTest) {
+TEST(GrammarCompressedTest, FibonacciLengthOneTest) {
     std::string s = "APATTERNA";
     auto gc_string = gc_fib_string(0);
     auto fkernel = GCKernel(s, gc_string);
@@ -41,7 +41,7 @@ TEST(FibonacciTest, CalculateKernelLengthOneTest) {
     ASSERT_EQ(kernel::dp_lcs(s, fib_string(0)), fkernel.lcs);
 }
 
-TEST(FibonacciTest, CalculateKernelLengthTwoTest) {
+TEST(GrammarCompressedTest, FibonacciLengthTwoTest) {
     std::string s = "APATBTERNAB";
     auto gc_string = gc_fib_string(1);
     auto fkernel = GCKernel(s, gc_string);
@@ -49,7 +49,7 @@ TEST(FibonacciTest, CalculateKernelLengthTwoTest) {
     ASSERT_EQ(kernel::dp_lcs(s, fib_string(1)), fkernel.lcs);
 }
 
-TEST(FibonacciTest, CalculateKernelLengthThreeTest) {
+TEST(GrammarCompressedTest, FibonacciLengthThreeTest) {
     std::string s = "APATBTERNAB";
     auto gc_string = gc_fib_string(2);
     auto fkernel = GCKernel(s, gc_string);
@@ -59,7 +59,7 @@ TEST(FibonacciTest, CalculateKernelLengthThreeTest) {
 
 
 
-TEST(FibonacciTest, CalculateKernelSameFibStringTest) {
+TEST(GrammarCompressedTest, FibonacciSameFibStringTest) {
     std::string s = "ABAABABAABAAB";
     auto gc_string = gc_fib_string(5);
     auto fkernel = GCKernel(s, gc_string);
@@ -68,7 +68,7 @@ TEST(FibonacciTest, CalculateKernelSameFibStringTest) {
 }
 
 
-TEST(FibonacciTest, CalculateKernelDifferentFibStringTest) {
+TEST(GrammarCompressedTest, FibonacciDifferentFibStringTest) {
     std::string s = "ABACABABDAABAAAB";
     auto gc_string = gc_fib_string(8);
     auto fkernel = GCKernel(s, gc_string);
@@ -76,7 +76,7 @@ TEST(FibonacciTest, CalculateKernelDifferentFibStringTest) {
     ASSERT_EQ(kernel::dp_lcs(s, fib_string(8)), fkernel.lcs);
 }
 
-TEST(FibonacciTest, CalculateKernelManyABsTest) {
+TEST(GrammarCompressedTest, FibonacciManyABsTest) {
     std::string s = "ABABABABABA";
     auto gc_string = gc_fib_string(5);
     auto fkernel = GCKernel(s, gc_string);
@@ -84,7 +84,7 @@ TEST(FibonacciTest, CalculateKernelManyABsTest) {
     ASSERT_EQ(kernel::dp_lcs(s, fib_string(5)), fkernel.lcs);
 }
 
-TEST(FibonacciTest, CalculateKernelNoMatchesTest) {
+TEST(GrammarCompressedTest, FibonacciNoMatchesTest) {
     std::string s = "QWERTY";
     auto gc_string = gc_fib_string(2);
     auto fkernel = GCKernel(s, gc_string);
@@ -92,7 +92,7 @@ TEST(FibonacciTest, CalculateKernelNoMatchesTest) {
     ASSERT_EQ(kernel::dp_lcs(s, fib_string(2)), fkernel.lcs);
 }
 
-TEST(FibonacciTest, CalculateKernelOneMatchATest) {
+TEST(GrammarCompressedTest, FibonacciOneMatchATest) {
     std::string s = "QWAERTY";
     auto gc_string = gc_fib_string(7);
     auto fkernel = GCKernel(s, gc_string);
@@ -101,7 +101,7 @@ TEST(FibonacciTest, CalculateKernelOneMatchATest) {
 }
 
 
-TEST(FibonacciTest, CalculateKernelOneMatchBTest) {
+TEST(GrammarCompressedTest, FibonacciOneMatchBTest) {
     std::string s = "QWERTBY";
     auto gc_string = gc_fib_string(7);
     auto fkernel = GCKernel(s, gc_string);
@@ -110,5 +110,5 @@ TEST(FibonacciTest, CalculateKernelOneMatchBTest) {
 }
 
 }  // namespace
-}  // namespace fkernel
+}  // namespace gc
 }  // namespace LCS

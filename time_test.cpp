@@ -4,7 +4,7 @@
 #include <string>
 
 #include "lcs_kernel.h"
-#include "fibonacci.h"
+#include "grammar_compressed.h"
 
 using Clock = std::chrono::steady_clock;
 using std::chrono::time_point;
@@ -23,12 +23,12 @@ std::string generate_random_string(unsigned length) {
 
 LCS::gc::GrammarCompressed generate_fib_string(unsigned length) {
     if (length == 0) {
-        return LCS::gc::GrammarCompressed('A');
+        return LCS::gc::GrammarCompressed(length + 1, 'A');
     } else if (length == 1) {
-        return LCS::gc::GrammarCompressed(generate_fib_string(0), LCS::gc::GrammarCompressed('B'));
+        return LCS::gc::GrammarCompressed(length + 1, generate_fib_string(0), LCS::gc::GrammarCompressed(0, 'B'));
     } else {
         LCS::gc::GrammarCompressed prev = generate_fib_string(length - 1);
-        return LCS::gc::GrammarCompressed(prev, *prev.first_symbol);
+        return LCS::gc::GrammarCompressed(length + 1, prev, *prev.first_symbol);
     }
 }
 
@@ -59,9 +59,25 @@ void test_strings(const std::string &a, unsigned b_number) {
 }
 
 
+void test_recursive(const std::string &a, unsigned b_number) {
+    LCS::gc::GrammarCompressed b = generate_fib_string(b_number);
+    std::cout << "LCS calculation for string length " << a.size() << " and " << b_number << " Fibonacci string" << std::endl;
+    auto recursive_time = time_recursive(a, b);
+    std::cout << "Time for recursive kernel is " << recursive_time << "ms" << std::endl;
+}
+
+
 int main() {
     test_strings(generate_random_string(3), 10);
     test_strings(generate_random_string(5), 10);
     test_strings(generate_random_string(3), 30);
+
+    test_recursive(generate_random_string(3), 40);
+    test_recursive(generate_random_string(3), 50);
+    test_recursive(generate_random_string(3), 60);
+
+    // test_recursive(generate_random_string(5), 40);
+    // test_recursive(generate_random_string(5), 50);
+    // test_recursive(generate_random_string(5), 60);
     return 0;
 }
