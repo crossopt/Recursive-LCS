@@ -9,6 +9,90 @@
 namespace LCS {
 namespace gc {
 
+const int ALPHABET_SIZE = 26;
+
+// Compress the string s with alphabet characters 'A'-'Z' using LZ78 compression.
+GrammarCompressed LZ78(const std::string &s) {
+    std::vector <GrammarCompressed> gcs(1);
+    int current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <std::vector <int>> next_entry(1, std::vector <int> (ALPHABET_SIZE, 0));
+    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned int i = 0; i < s.size(); ++i) {
+        int c = s[i] - 'A';
+        if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
+            // If current prefix + c is in the dictionary, and the string has not ended.
+            current_entry = next_entry[current_entry][c];
+        } else {
+            // Add current character as string to grammar.
+            int dict_char = gcs.size();
+            int dict_entry = dict_char;
+            gcs.push_back(GrammarCompressed(dict_char, s[i]));
+            next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
+
+            // Add the new string (current_entry + c) to the dictionary.
+            if (!current_entry) {
+                next_entry[current_entry][c] = dict_char;
+            } else {  // A previous non-empty entry existed.
+                dict_entry = gcs.size();
+                gcs.push_back(GrammarCompressed(dict_entry, gcs[current_entry], gcs[dict_char]));
+                next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
+                next_entry[current_entry][c] = dict_entry;
+                current_entry = 0;
+            }
+
+            // Concatenate two dictionary strings, if necessary.
+            if (!last_string_entry) {
+                last_string_entry = dict_entry;
+            } else {
+                int string_entry = gcs.size();
+                gcs.push_back(GrammarCompressed(string_entry, gcs[last_string_entry], gcs[dict_entry]));
+                next_entry.resize(next_entry.size() + 1);
+                last_string_entry = string_entry;
+            }
+        }
+    }
+    return gcs[last_string_entry];
+}
+
+// Compress the string s with alphabet characters 'A'-'Z' using LZW compression.
+GrammarCompressed LZW(const std::string &s) {
+    std::vector <GrammarCompressed> gcs(1);
+    int current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <std::vector <int>> next_entry(ALPHABET_SIZE + 1, std::vector <int> (ALPHABET_SIZE, 0));
+    // Initialize LZW alphabet.
+    for (unsigned int i = 0; i < ALPHABET_SIZE; ++i) {
+        next_entry[0][i] = i + 1;
+        gcs.push_back(GrammarCompressed(i + 1, (char)('A' + i)));
+    }
+    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned int i = 0; i < s.size(); ++i) {
+        int c = s[i] - 'A';
+        if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
+            // If current prefix + c is in the dictionary, and the string has not ended.
+            current_entry = next_entry[current_entry][c];
+        } else {
+            // Add the new string (current_entry + c) to the dictionary.
+            int dict_char = c + 1, dict_entry = gcs.size();
+            gcs.push_back(GrammarCompressed(dict_entry, gcs[current_entry], gcs[dict_char]));
+            next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
+            next_entry[current_entry][c] = dict_entry;
+            current_entry = 0;
+
+            // Concatenate two dictionary strings, if necessary.
+            if (!last_string_entry) {
+                last_string_entry = dict_entry;
+            } else {
+                int string_entry = gcs.size();
+                gcs.push_back(GrammarCompressed(string_entry, gcs[last_string_entry], gcs[dict_entry]));
+                next_entry.resize(next_entry.size() + 1);
+                last_string_entry = string_entry;
+            }
+        }
+    }
+    return gcs[last_string_entry];
+}
+
+
 GCKernel::GCKernel(const std::string &p, const GrammarCompressed &t): lcs(calculate_lcs(p, t)) {}
 
 // Returns permutation split into strings touching the left side and not.

@@ -20,6 +20,8 @@ public:
 	const std::shared_ptr<GrammarCompressed> first_symbol;  // the left rule for non-bases
 	const std::shared_ptr<GrammarCompressed> second_symbol;  // the right rule for non-bases
 
+    GrammarCompressed(): number(0), is_base(0), value(0), first_symbol(0), second_symbol(0) {}
+
 	explicit GrammarCompressed(int number, char c): number(number),
 													is_base(true),
 													value(c),
@@ -38,6 +40,9 @@ public:
 		return is_base ? std::string(1, value) : first_symbol->decompress() + second_symbol->decompress();
 	}
 };
+
+GrammarCompressed LZ78(const std::string &s);
+GrammarCompressed LZW(const std::string &s);
 
 // Class that calculates the LCS kernel to solve the semi-local LCS problem
 // for a plain pattern and a grammar-compressed text.
