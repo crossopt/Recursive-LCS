@@ -117,14 +117,14 @@ int main() {
     test_lz(generate_random_string(64), generate_random_a_string(16384));
     test_lz(generate_random_string(256), generate_random_a_string(16384));
 
-    test_lz(generate_random_string(4 * 2), generate_random_a_string(16384 * 16));
-    test_lz(generate_random_string(16 * 2), generate_random_a_string(16384 * 16));
-    test_lz(generate_random_string(64 * 2), generate_random_a_string(16384 * 16));
-    test_lz(generate_random_string(256 * 2), generate_random_a_string(16384 * 16));
+    test_lz(generate_random_string(4), generate_random_a_string(16384 * 16));
+    test_lz(generate_random_string(16), generate_random_a_string(16384 * 16));
+    test_lz(generate_random_string(64), generate_random_a_string(16384 * 16));
+    test_lz(generate_random_string(256), generate_random_a_string(16384 * 16));
 
-    test_lz(generate_random_string(4 * 2), generate_random_a_string(16384 * 16 * 16));
-    test_lz(generate_random_string(16 * 2), generate_random_a_string(16384 * 16 * 16));
-    test_lz(generate_random_string(64 * 2), generate_random_a_string(16384 * 16 * 16));
-    test_lz(generate_random_string(256 * 2), generate_random_a_string(16384 * 16 * 16));
+    test_lz(generate_random_string(4), generate_random_a_string(16384 * 16 * 16));
+    test_lz(generate_random_string(16), generate_random_a_string(16384 * 16 * 16));
+    test_lz(generate_random_string(64), generate_random_a_string(16384 * 16 * 16));
+    test_lz(generate_random_string(256), generate_random_a_string(16384 * 16 * 16));
     return 0;
 }
