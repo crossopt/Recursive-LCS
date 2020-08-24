@@ -12,8 +12,9 @@ namespace gc {
 const int ALPHABET_SIZE = 26;
 
 // Compress the string s with alphabet characters 'A'-'Z' using LZ78 compression.
-GrammarCompressed LZ78(const std::string &s) {
-    std::vector <GrammarCompressed> gcs(1);
+GrammarCompressedStorage LZ78(const std::string &s) {
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
     int current_entry = 0;  // The entry corresponding to the current buffer.
     std::vector <std::vector <int>> next_entry(1, std::vector <int> (ALPHABET_SIZE, 0));
     int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
@@ -24,17 +25,19 @@ GrammarCompressed LZ78(const std::string &s) {
             current_entry = next_entry[current_entry][c];
         } else {
             // Add current character as string to grammar.
-            int dict_char = gcs.size();
+            int dict_char = gcs_index.size();
             int dict_entry = dict_char;
-            gcs.push_back(GrammarCompressed(dict_char, s[i]));
+            gcs_index.push_back(gcs.rules.size());
+            gcs.add_rule(GrammarCompressed(gcs, dict_char, s[i]));
             next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
 
             // Add the new string (current_entry + c) to the dictionary.
             if (!current_entry) {
                 next_entry[current_entry][c] = dict_char;
             } else {  // A previous non-empty entry existed.
-                dict_entry = gcs.size();
-                gcs.push_back(GrammarCompressed(dict_entry, gcs[current_entry], gcs[dict_char]));
+                dict_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], gcs_index[dict_char]));
                 next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
                 next_entry[current_entry][c] = dict_entry;
                 current_entry = 0;
@@ -44,25 +47,29 @@ GrammarCompressed LZ78(const std::string &s) {
             if (!last_string_entry) {
                 last_string_entry = dict_entry;
             } else {
-                int string_entry = gcs.size();
-                gcs.push_back(GrammarCompressed(string_entry, gcs[last_string_entry], gcs[dict_entry]));
+                int string_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, string_entry, gcs_index[last_string_entry], gcs_index[dict_entry]));
                 next_entry.resize(next_entry.size() + 1);
                 last_string_entry = string_entry;
             }
         }
     }
-    return gcs[last_string_entry];
+    gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
 }
 
 // Compress the string s with alphabet characters 'A'-'Z' using LZW compression.
-GrammarCompressed LZW(const std::string &s) {
-    std::vector <GrammarCompressed> gcs(1);
+GrammarCompressedStorage LZW(const std::string &s) {
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
     int current_entry = 0;  // The entry corresponding to the current buffer.
     std::vector <std::vector <int>> next_entry(ALPHABET_SIZE + 1, std::vector <int> (ALPHABET_SIZE, 0));
     // Initialize LZW alphabet.
     for (unsigned int i = 0; i < ALPHABET_SIZE; ++i) {
         next_entry[0][i] = i + 1;
-        gcs.push_back(GrammarCompressed(i + 1, (char)('A' + i)));
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, i + 1, (char)('A' + i)));
     }
     int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
     for (unsigned int i = 0; i < s.size(); ++i) {
@@ -72,8 +79,9 @@ GrammarCompressed LZW(const std::string &s) {
             current_entry = next_entry[current_entry][c];
         } else {
             // Add the new string (current_entry + c) to the dictionary.
-            int dict_char = c + 1, dict_entry = gcs.size();
-            gcs.push_back(GrammarCompressed(dict_entry, gcs[current_entry], gcs[dict_char]));
+            int dict_char = c + 1, dict_entry = gcs_index.size();
+            gcs_index.push_back(gcs.rules.size());
+            gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], gcs_index[dict_char]));
             next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
             next_entry[current_entry][c] = dict_entry;
             current_entry = 0;
@@ -82,18 +90,20 @@ GrammarCompressed LZW(const std::string &s) {
             if (!last_string_entry) {
                 last_string_entry = dict_entry;
             } else {
-                int string_entry = gcs.size();
-                gcs.push_back(GrammarCompressed(string_entry, gcs[last_string_entry], gcs[dict_entry]));
+                int string_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, string_entry, gcs_index[last_string_entry], gcs_index[dict_entry]));
                 next_entry.resize(next_entry.size() + 1);
                 last_string_entry = string_entry;
             }
         }
     }
-    return gcs[last_string_entry];
+    gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
 }
 
 
-GCKernel::GCKernel(const std::string &p, const GrammarCompressed &t): lcs(calculate_lcs(p, t)) {}
+GCKernel::GCKernel(const std::string &p, const GrammarCompressedStorage &t): lcs(calculate_lcs(p, t)) {}
 
 // Returns permutation split into strings touching the left side and not.
 std::pair <matrix::Permutation, matrix::Permutation> get_left(const matrix::Permutation &p,
@@ -201,35 +211,35 @@ matrix::Permutation combine(matrix::Permutation &left_side,
 
 
 void GCKernel::calculate_gc_kernel(std::vector<matrix::Permutation> &calculated, 
-                                                  const std::string &p, const GrammarCompressed &t) {
-    if (calculated[t.number].get_nonzero_amount()) {
-    } else if (t.is_base) { // t is a single symbol
-        calculated[t.number] = calculate_char_kernel(p, t.value);
+                                                  const std::string &p, const GrammarCompressedStorage &t, unsigned int index) {
+    if (calculated[t.rules[index].number].get_nonzero_amount()) {
+    } else if (t.rules[index].is_base) { // t is a single symbol
+        calculated[t.rules[index].number] = calculate_char_kernel(p, t.rules[index].value);
     } else { // t = uv
-        auto first_half = *t.first_symbol;
-        auto second_half = *t.second_symbol;
-        if (!calculated[first_half.number].get_nonzero_amount()) {
-            calculate_gc_kernel(calculated, p, first_half);
+        unsigned int first_half = t.rules[index].first_symbol;
+        unsigned int second_half = t.rules[index].second_symbol;
+        unsigned int first_number = t.rules[first_half].number;
+        unsigned int second_number = t.rules[second_half].number;
+        if (!calculated[first_number].get_nonzero_amount()) {
+            calculate_gc_kernel(calculated, p, t, first_half);
         }
-        if (!calculated[second_half.number].get_nonzero_amount()) {
-            calculate_gc_kernel(calculated, p, second_half);
+        if (!calculated[second_number].get_nonzero_amount()) {
+            calculate_gc_kernel(calculated, p, t, second_half);
         }
 
-        auto to_right = get_right(calculated[first_half.number], p.size(),
-                                    calculated[first_half.number].cols.size() - p.size());
-        auto from_left = get_left(calculated[second_half.number], p.size(),
-                                    calculated[second_half.number].cols.size() - p.size());
+        auto to_right = get_right(calculated[first_number], p.size(), calculated[first_number].cols.size() - p.size());
+        auto from_left = get_left(calculated[second_number], p.size(), calculated[second_number].cols.size() - p.size());
         auto intersection = to_right.second * from_left.first;
 
-        calculated[t.number] = combine(to_right.first, intersection, from_left.second,
-                                       calculated[first_half.number].rows.size() - p.size(),
-                                       calculated[first_half.number].cols.size() - p.size());
+        calculated[t.rules[index].number] = combine(to_right.first, intersection, from_left.second,
+                                                    calculated[first_number].rows.size() - p.size(),
+                                                    calculated[first_number].cols.size() - p.size());
     }
 }
 
-unsigned GCKernel::calculate_lcs(const std::string &p, const GrammarCompressed &t) {
-    std::vector <matrix::Permutation> kernels(t.number + 1);
-    calculate_gc_kernel(kernels, p, t);
+unsigned GCKernel::calculate_lcs(const std::string &p, const GrammarCompressedStorage &t) {
+    std::vector <matrix::Permutation> kernels(t.rules[t.final_rule].number + 1);
+    calculate_gc_kernel(kernels, p, t, t.final_rule);
     auto kernel = kernels.back();
     int size = kernel.cols.size() - p.size();
     unsigned count_dom = 0;
