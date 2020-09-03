@@ -170,6 +170,79 @@ TEST(GrammarCompressedTest, LZW8ComputesCorrectlyTest) {
     ASSERT_EQ(gc_lzw_string.rules[lower_right].number, 26 + 2);
 }
 
+TEST(GrammarCompressedTest, LZ78GrammarStringIsCalculatedCorrectlyTest) {
+    ASSERT_EQ(get_lz78_grammar_string(0), "A");
+    ASSERT_EQ(get_lz78_grammar_string(1), "AAB");
+    ASSERT_EQ(get_lz78_grammar_string(2), "AABABC");
+    ASSERT_EQ(get_lz78_grammar_string(3), "AABABCABCD");
+    ASSERT_EQ(get_lz78_grammar_string(4), "AABABCABCDABCDE");
+    ASSERT_EQ(get_lz78_grammar_string(5), "AABABCABCDABCDEABCDEF");
+    ASSERT_EQ(get_lz78_grammar_string(6), "AABABCABCDABCDEABCDEFABCDEFG");
+}
+
+TEST(GrammarCompressedTest, LZWGrammarStringIsCalculatedCorrectlyTest) {
+    ASSERT_EQ(get_lzw_grammar_string(0), "AA");
+    ASSERT_EQ(get_lzw_grammar_string(1), "AAAAB");
+    ASSERT_EQ(get_lzw_grammar_string(2), "AAAABAABC");
+    ASSERT_EQ(get_lzw_grammar_string(3), "AAAABAABCAABCD");
+    ASSERT_EQ(get_lzw_grammar_string(4), "AAAABAABCAABCDAABCDE");
+    ASSERT_EQ(get_lzw_grammar_string(5), "AAAABAABCAABCDAABCDEAABCDEF");
+    ASSERT_EQ(get_lzw_grammar_string(6), "AAAABAABCAABCDAABCDEAABCDEFAABCDEFG");
+}
+
+TEST(GrammarCompressedTest, LZGrammarStringIsCalculatedCorrectlyTest) {
+    ASSERT_EQ(get_lz_grammar_string(0), "ABAA");
+    ASSERT_EQ(get_lz_grammar_string(1), "ABAAAAB");
+    ASSERT_EQ(get_lz_grammar_string(2), "ABAAAABAABC");
+    ASSERT_EQ(get_lz_grammar_string(3), "ABAAAABAABCAABCD");
+}
+
+TEST(GrammarCompressedTest, LZ78GrammarStringIsCompressedQuadraticallyByLZ78Compressions) {
+    std::vector <unsigned int> number_list = {5, 179, 300};
+    for (auto number: number_list) {
+        std::string s = get_lz78_grammar_string(number);
+        ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2);
+        auto gc_lz78_string = LZ78(s);
+        // Exactly n * 3: one rule per symbol, one per substring, one for concatenation.
+        ASSERT_EQ(gc_lz78_string.final_rule, number * 3);   
+    }
+}
+
+TEST(GrammarCompressedTest, LZWGrammarStringIsCompressedQuadraticallyByLZWCompressions) {
+    std::vector <unsigned int> number_list = {5, 179, 300};
+    for (auto number: number_list) {
+        std::string s = get_lzw_grammar_string(number);
+        ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2 + number + 1);
+        auto gc_lzw_string = LZW(s);
+        // Exactly n * 2 + 26: the alphabet rules, one rule per substring, one for concatenation.
+        ASSERT_EQ(gc_lzw_string.final_rule, number * 2 + 26);   
+    }
+}
+
+TEST(GrammarCompressedTest, LZGrammarStringIsCompressedQuadraticallyByLZ78Compressions) {
+    std::vector <unsigned int> number_list = {5, 179, 300};
+    for (auto number: number_list) {
+        std::string s = get_lz_grammar_string(number);
+        ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2  + (number + 1) + 2);
+        auto gc_lz78_string = LZ78(s);
+        // 5 original rules for 'ABAA': 'A', 'B', 'AB', 'A', AA'.
+        // Exactly n * 3: one rule per symbol, one per substring, one for concatenation.
+        ASSERT_EQ(gc_lz78_string.final_rule, 5 + number * 3);   
+    }
+}
+
+TEST(GrammarCompressedTest, LZGrammarStringIsCompressedQuadraticallyByLZWCompressions) {
+    std::vector <unsigned int> number_list = {5, 179, 300};
+    for (auto number: number_list) {
+        std::string s = get_lz_grammar_string(number);
+        ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2 + (number + 1) + 2);
+        auto gc_lzw_string = LZW(s);
+        // 2 original rules for 'ABAA': 'AB', 'AA'.
+        // Exactly n * 2 + 26: the alphabet rules, one rule per substring, one for concatenation.
+        ASSERT_EQ(gc_lzw_string.final_rule, 2 + number * 2 + 26);   
+    }
+}
+
 }  // namespace
 }  // namespace gc
 }  // namespace LCS

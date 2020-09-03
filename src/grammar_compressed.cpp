@@ -11,6 +11,53 @@ namespace gc {
 
 const int ALPHABET_SIZE = 26;
 
+
+// Returns the nth LZ78 grammar string. A LZ78 grammar string is a specially constructed string
+// that is compressed quadratically by the LZ78 compression.
+std::string get_lz78_grammar_string(unsigned int number) {
+    std::vector <std::string> trie_entries(number + 1);
+    trie_entries[0] = "A";
+    for (unsigned int i = 1; i <= number; ++i) {
+        trie_entries[i] = trie_entries[i - 1] + (char)('A' + i % ALPHABET_SIZE);
+    }
+    std::string result;
+    for (unsigned int i = 0; i <= number; ++i) {
+        result += trie_entries[i];
+    }
+    return result;
+}
+
+// Returns the nth LZW grammar string. A LZW grammar string is a specially constructed string
+// that is compressed quadratically by the LZW compression.
+std::string get_lzw_grammar_string(unsigned int number) {
+    std::vector <std::string> trie_entries(number + 1);
+    trie_entries[0] = "AA";
+    for (unsigned int i = 1; i <= number; ++i) {
+        trie_entries[i] = trie_entries[i - 1] + (char)('A' + i % ALPHABET_SIZE);
+    }
+    std::string result;
+    for (unsigned int i = 0; i <= number; ++i) {
+        result += trie_entries[i];
+    }
+    return result;
+}
+
+// Returns the nth LZ grammar string. A LZW grammar string is a specially constructed string
+// that is compressed quadratically by the LZW compression.
+std::string get_lz_grammar_string(unsigned int number) {
+    std::vector <std::string> trie_entries(number + 1);
+    std::string add = "ABAA";
+    trie_entries[0] = "AAB";
+    for (unsigned int i = 0; i + 1 < number; ++i) {
+        trie_entries[i + 1] = trie_entries[i] + (char)('A' + (i + 2) % ALPHABET_SIZE);
+    }
+    std::string result = add;
+    for (unsigned int i = 0; i < number; ++i) {
+        result += trie_entries[i];
+    }
+    return result;
+}
+
 // Compress the string s with alphabet characters 'A'-'Z' using LZ78 compression.
 GrammarCompressedStorage LZ78(const std::string &s) {
     GrammarCompressedStorage gcs = GrammarCompressedStorage();

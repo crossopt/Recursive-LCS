@@ -60,6 +60,9 @@ public:
 
 GrammarCompressedStorage LZ78(const std::string &s);
 GrammarCompressedStorage LZW(const std::string &s);
+std::string get_lz78_grammar_string(unsigned int number);
+std::string get_lzw_grammar_string(unsigned int number);
+std::string get_lz_grammar_string(unsigned int number);
 
 // Class that calculates the LCS kernel to solve the semi-local LCS problem
 // for a plain pattern and a grammar-compressed text.
