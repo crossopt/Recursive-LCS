@@ -96,6 +96,19 @@ void test_fibonacci(const std::string &a, unsigned b_number, bool dbg) {
     }
 }
 
+void test_aa(const std::string &a, unsigned long long b_number, bool dbg) {
+    LCS::gc::GrammarCompressedStorage b = LCS::gc::get_aaaa(b_number);
+    std::cout << "GOT string " << b.final_rule + 1 << '\n';
+    auto recursive_time = time_recursive(a, b, dbg);
+    if (dbg) {
+        std::cout << "Time for recursive kernel is " << recursive_time << "ms" << std::endl;
+    }
+    // to-latex-format: pattern length, grammar length = fib number, uncompressed string length, compressed time, dp time
+    if (!dbg) {
+        std::cout << a.size() << '&' << b.final_rule + 1 << '&' << b_number << '&' << recursive_time << "\\\\" << std::endl;
+    }
+}
+
 void test_recursive(const std::string &a, unsigned b_number) {
     LCS::gc::GrammarCompressedStorage b = generate_fib_string(b_number);
     std::cout << "LCS calculation for string length " << a.size() << " and " << b_number << " Fibonacci string" << std::endl;
@@ -119,36 +132,103 @@ void test_lz(const std::string &p, unsigned lz_number, bool dbg) {
     }
 }
 
+void test_lzw(const std::string &p, unsigned lz_number, bool dbg) {
+    std::string t = LCS::gc::get_lzw_grammar_string(lz_number);
+    LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::LZW(t);
+    auto lzw_time = time_recursive(p, compress_w, dbg);
+    auto dp_time = time_dp(p, t, dbg);
+    if (dbg) {
+        std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+        std::cout << "Time for lzw recursive kernel is " << lzw_time << "ms" << std::endl;
+    }
+    // to-latex-format: pattern length, grammar length for lzw, uncompressed string length, lzw time, dp time
+    if (!dbg) {
+        std::cout << p.size() << '&' << compress_w.final_rule + 3 << '&' <<
+        t.size() << '&' << lzw_time << '&' << dp_time << "\\\\" << std::endl;
+    }
+}
+
+void test_unix_compress(const std::string &p, const std::string &file_name, bool dbg) {
+    std::string t = LCS::gc::get_uncompress_string(file_name);
+    LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::get_compress_string(file_name);
+    auto lzw_time = time_recursive(p, compress_w, dbg);
+    auto dp_time = time_dp(p, t, dbg);
+    // std::cout << "STRING " << t << std::endl;
+    if (dbg) {
+        std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+        std::cout << "Time for lzw recursive kernel is " << lzw_time << "ms" << std::endl;
+    }
+    // to-latex-format: pattern length, compressed string length, uncompressed string length, lz time, dp time
+    if (!dbg) {
+        std::cout << p.size() << '&' << compress_w.final_rule + 3 << '&' <<
+        t.size() << '&' << lzw_time << '&' << dp_time << "\\\\" << std::endl;
+    }
+}
+
 
 int main() {
-    test_fibonacci(generate_random_abc_string(4), 14, 0);
-    test_fibonacci(generate_random_abc_string(16), 14, 0);
-    test_fibonacci(generate_random_abc_string(64), 14, 0);
-    test_fibonacci(generate_random_abc_string(256), 14, 0);
+    // test_fibonacci(generate_random_abc_string(4), 14, 0);
+    // test_fibonacci(generate_random_abc_string(16), 14, 0);
+    // test_fibonacci(generate_random_abc_string(64), 14, 0);
+    // test_fibonacci(generate_random_abc_string(256), 14, 0);
 
-    test_fibonacci(generate_random_abc_string(4), 14 + 8, 0);
-    test_fibonacci(generate_random_abc_string(16), 14 + 8, 0);
-    test_fibonacci(generate_random_abc_string(64), 14 + 8, 0);
-    test_fibonacci(generate_random_abc_string(256), 14 + 8, 0);
+    // test_fibonacci(generate_random_abc_string(4), 14 + 8, 0);
+    // test_fibonacci(generate_random_abc_string(16), 14 + 8, 0);
+    // test_fibonacci(generate_random_abc_string(64), 14 + 8, 0);
+    // test_fibonacci(generate_random_abc_string(256), 14 + 8, 0);
 
-    test_fibonacci(generate_random_abc_string(4), 30, 0);
-    test_fibonacci(generate_random_abc_string(16), 30, 0);
-    test_fibonacci(generate_random_abc_string(64), 30, 0);
-    test_fibonacci(generate_random_abc_string(256), 30, 0);
+    // test_fibonacci(generate_random_abc_string(4), 30, 0);
+    // test_fibonacci(generate_random_abc_string(16), 30, 0);
+    // test_fibonacci(generate_random_abc_string(64), 30, 0);
+    // test_fibonacci(generate_random_abc_string(256), 30, 0);
     
-    test_lz(generate_random_alpha_string(4), 64, 0);
-    test_lz(generate_random_alpha_string(16), 64, 0);
-    test_lz(generate_random_alpha_string(64), 64, 0);
-    test_lz(generate_random_alpha_string(256), 64, 0);
+    // test_lz(generate_random_alpha_string(4), 64, 0);
+    // test_lz(generate_random_alpha_string(16), 64, 0);
+    // test_lz(generate_random_alpha_string(64), 64, 0);
+    // test_lz(generate_random_alpha_string(256), 64, 0);
 
-    test_lz(generate_random_alpha_string(4), 64 * 8, 0);
-    test_lz(generate_random_alpha_string(16), 64 * 8, 0);
-    test_lz(generate_random_alpha_string(64), 64 * 8, 0);
-    test_lz(generate_random_alpha_string(256), 64 * 8, 0);
+    // test_lz(generate_random_alpha_string(4), 64 * 8, 0);
+    // test_lz(generate_random_alpha_string(16), 64 * 8, 0);
+    // test_lz(generate_random_alpha_string(64), 64 * 8, 0);
+    // test_lz(generate_random_alpha_string(256), 64 * 8, 0);
 
-    test_lz(generate_random_alpha_string(4), 64 * 64, 0);
-    test_lz(generate_random_alpha_string(16), 64 * 64, 0);
-    test_lz(generate_random_alpha_string(64), 64 * 64, 0);
-    test_lz(generate_random_alpha_string(256), 64 * 64, 0);
+    // test_lz(generate_random_alpha_string(4), 64 * 64, 0);
+    // test_lz(generate_random_alpha_string(16), 64 * 64, 0);
+    // test_lz(generate_random_alpha_string(64), 64 * 64, 0);
+    // test_lz(generate_random_alpha_string(256), 64 * 64, 0);
+    
+    // test_lzw(generate_random_alpha_string(4), 64, 0);
+    // test_lzw(generate_random_alpha_string(16), 64, 0);
+    // test_lzw(generate_random_alpha_string(64), 64, 0);
+    // test_lzw(generate_random_alpha_string(256), 64, 0);
+
+    // // test_lzw(generate_random_alpha_string(4), 64 * 8, 0);
+    // test_lzw(generate_random_alpha_string(16), 64 * 8, 0);
+    // test_lzw(generate_random_alpha_string(64), 64 * 8, 0);
+    // test_lzw(generate_random_alpha_string(256), 64 * 8, 0);
+
+    // // test_lzw(generate_random_alpha_string(4), 64 * 64, 0);
+    // test_lzw(generate_random_alpha_string(16), 64 * 64, 0);
+    // test_lzw(generate_random_alpha_string(64), 64 * 64, 0);
+    // test_lzw(generate_random_alpha_string(256), 64 * 64, 0);
+
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t10.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t10.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t10.Z", 0);
+
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t9.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t9.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t9.Z", 0);
+
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t8.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t8.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 0);
+
+
+    test_aa(generate_random_abc_string(16), 100000, 0);
+    test_aa(generate_random_abc_string(16), 1000000, 0);
+    test_aa(generate_random_abc_string(16), 10000000, 0);
+    test_aa(generate_random_abc_string(16), 536800000, 0);
+    // test_aa(generate_random_abc_string(16), 1ll * 1000 * 1000 * 1000 * 1000, 1);
     return 0;
 }

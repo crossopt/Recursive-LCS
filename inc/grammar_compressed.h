@@ -53,6 +53,11 @@ public:
 
 	// Returns the decompressed string for the grammar.
 	std::string decompress() const {
+		// if (is_base) {
+		// 	std::cout << "decompressing char rule " << number << " " << value << " " << std::string(1, value) << "\n";
+		// } else {
+		// 	std::cout << "decompressing rule " << number << " " <<  first_symbol << " " <<  second_symbol << "\n";
+		// }
 		return is_base ? std::string(1, value) : gc_storage.rules[first_symbol].decompress() 
 		                                       + gc_storage.rules[second_symbol].decompress();
 	}
@@ -63,6 +68,12 @@ GrammarCompressedStorage LZW(const std::string &s);
 std::string get_lz78_grammar_string(unsigned int number);
 std::string get_lzw_grammar_string(unsigned int number);
 std::string get_lz_grammar_string(unsigned int number);
+
+std::string get_uncompress_string(const std::string &file_name);
+GrammarCompressedStorage get_compress_string(const std::string &file_name);
+
+// Time agrep, delete later.
+GrammarCompressedStorage get_aaaa(unsigned long long number);
 
 // Class that calculates the LCS kernel to solve the semi-local LCS problem
 // for a plain pattern and a grammar-compressed text.

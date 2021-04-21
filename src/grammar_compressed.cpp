@@ -1,6 +1,8 @@
 #include "grammar_compressed.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
@@ -10,6 +12,7 @@ namespace LCS {
 namespace gc {
 
 const int ALPHABET_SIZE = 26;
+const int ASCII_SIZE = 256;
 
 
 // Returns the nth LZ78 grammar string. A LZ78 grammar string is a specially constructed string
@@ -146,6 +149,365 @@ GrammarCompressedStorage LZW(const std::string &s) {
         }
     }
     gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
+}
+
+GrammarCompressedStorage get_aaaa(unsigned long long number) {
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
+    int current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <int> next_entry(ASCII_SIZE + 1, 0);
+    // Initialize LZW alphabet.
+    next_entry[0] = 'a' + 1;
+    for (unsigned int i = 0; i < ASCII_SIZE; ++i) {
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, i + 1, i));
+    }
+    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned int i = 0; i < number; ++i) {
+        // int c = 'a';
+        if (next_entry[current_entry] != 0 && i + 1 != number) {
+            // If current prefix + c is in the dictionary, and the string has not ended.
+            current_entry = next_entry[current_entry];
+        } else {
+            // Add the new string (current_entry + c) to the dictionary.
+            // int dict_char = c + 1;
+            int dict_entry = gcs_index.size();
+            gcs_index.push_back(gcs.rules.size());
+            gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], 'a'));
+            next_entry.push_back(0);
+            next_entry[current_entry] = dict_entry;
+            current_entry = 0;
+
+            // Concatenate two dictionary strings, if necessary.
+            if (!last_string_entry) {
+                last_string_entry = dict_entry;
+            } else {
+                int string_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, string_entry, gcs_index[last_string_entry], gcs_index[dict_entry]));
+                next_entry.resize(next_entry.size() + 1);
+                last_string_entry = string_entry;
+            }
+        }
+    }
+    gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
+}
+
+int intify(char c) {
+    return (int)c >= 0 ? (int)c : 256 + (int)c;
+}
+
+std::string read_file_contents(const std::string &file_name) {
+    std::ifstream t(file_name);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return buffer.str();
+}
+
+  
+/*
+  Uncompress file compressed with UNIX Z-compress.
+  This function and the one below were adapted from Mark Adler's C implementation
+  on Stackoverflow. Original copyright notice below.
+
+  unlzw version 1.4, 22 August 2015
+  Copyright (C) 2014, 2015 Mark Adler
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+  Mark Adler
+  madler@alumni.caltech.edu
+*/
+std::string get_uncompress_string(const std::string &file_name) {
+    std::string input = read_file_contents(file_name);
+    unsigned int inlen = input.size();
+    std::vector <unsigned int> prefix(65536, 0), suffix(65536, 0);
+
+    unsigned int flags = intify(input[2]);
+    unsigned int mx = flags & 0x1f;
+    if (mx == 9) mx = 10;
+
+    flags = flags & 0x80;
+    unsigned int bits = 9;
+    unsigned int mask = 0x1ff;
+    unsigned int fend = flags ? 256 : 255;
+
+    if (inlen == 3) {
+        return "";
+    }
+
+    unsigned int buf = intify(input[3]);
+    buf += intify(input[4]) << 8;
+    unsigned int prev = buf & mask;
+
+    unsigned int fin = prev;
+    buf >>= bits;
+
+    // std::cout << "buf" << ' ' << buf <<  " fin " << fin << '\n';
+    unsigned int left = 16 - bits;
+    std::string put(1, fin);
+
+    unsigned int mark = 3, nxt = 5;
+    while (nxt < inlen) {
+         if ((fend >= mask) && (bits < mx)) {
+            unsigned int rem = (nxt - mark) % bits;
+
+            if (rem) {
+                rem = bits - rem;
+                if (rem >= inlen - nxt) {
+                    break;
+                }
+                nxt += rem;
+            }
+
+            buf = 0;
+            left = 0;
+
+            mark = nxt;
+
+            bits += 1;
+            mask <<= 1;
+            mask += 1;
+         }
+        buf += (intify(input[nxt]) << left);
+        nxt += 1;
+        left += 8;
+        if (left < bits) {
+            buf += (intify(input[nxt]) << left);
+            nxt += 1;
+            left += 8;
+        }
+        unsigned int code = buf & mask;
+        // std::cout << "bmc " << buf << ' ' << mask << ' ' << code << '\n';
+        buf >>= bits;
+        left -= bits;
+
+        if ((code == 256) && flags) {
+            unsigned int rem = (nxt - mark) % bits;
+            if (rem) {
+                rem = bits - rem;
+                if (rem > inlen - nxt) {
+                    break;
+                }
+                nxt += rem;
+            }
+            buf = 0;
+            left = 0;
+
+            mark = nxt;
+
+            bits = 9;
+            mask = 0x1ff;
+            fend = 255;
+            continue;
+        }
+
+        unsigned int temp = code;
+        // std::cout << "code " << code << '\n';
+        std::string stck;
+
+        if (code > fend) {
+            stck.push_back(fin);
+            code = prev;
+        }
+
+        while (code >= 256) {
+            stck.push_back(suffix[code]);
+            code = prefix[code];
+        }
+
+        stck.push_back(code);
+        fin = code;
+
+        if (fend < mask) {
+            fend += 1;
+            prefix[fend] = prev;
+            suffix[fend] = fin;
+            // std::cout << "ADD " << fend << ' ' << prev << ' ' << fin << '\n';
+        }
+        prev = temp;
+        for (int i = (int)stck.size() - 1; i >= 0; --i) {
+            put.push_back(stck[i]);
+        }
+        // std::cout << "stack " << stck << std::endl;
+    }
+    return put;
+}
+
+// Convert file compressed with UNIX Z-compress without decompressing.
+GrammarCompressedStorage get_compress_string(const std::string &file_name) {
+    std::string input = read_file_contents(file_name);
+    unsigned int inlen = input.size();
+    std::vector <unsigned int> prefix(65536, 0), suffix(65536, 0), rule_num(65536, 0);
+
+    unsigned int flags = intify(input[2]);
+    unsigned int mx = flags & 0x1f;
+    if (mx == 9) mx = 10;
+
+    flags = flags & 0x80;
+    unsigned int bits = 9;
+    unsigned int mask = 0x1ff;
+    unsigned int fend = flags ? 256 : 255;
+
+    if (inlen == 3) {
+        return GrammarCompressedStorage();
+    }
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
+
+    for (unsigned int i = 0; i < ASCII_SIZE; ++i) {
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, i + 1, i));
+        // std::cout << "RULE" << i + 1 << "  ( actual " << gcs.rules.size() - 1  << ") \n";
+        
+        //<< gcs.rules.back().decompress() << '\n';
+    }
+    // unsigned int last_rule = ASCII_SIZE;
+
+    unsigned int buf = intify(input[3]);
+    buf += intify(input[4]) << 8;
+    unsigned int prev = buf & mask;
+
+    unsigned int fin = prev;
+    buf >>= bits;
+
+    // std::cout << "buf" << ' ' << buf <<  " fin " << fin << '\n';
+    unsigned int left = 16 - bits;
+    // std::string put(1, fin);
+    std::vector <unsigned int> fin_list;
+    fin_list.push_back(fin + 1);
+
+    unsigned int mark = 3, nxt = 5;
+    while (nxt < inlen) {
+         if ((fend >= mask) && (bits < mx)) {
+            unsigned int rem = (nxt - mark) % bits;
+
+            if (rem) {
+                rem = bits - rem;
+                if (rem >= inlen - nxt) {
+                    break;
+                }
+                nxt += rem;
+            }
+
+            buf = 0;
+            left = 0;
+
+            mark = nxt;
+
+            bits += 1;
+            mask <<= 1;
+            mask += 1;
+         }
+        buf += (intify(input[nxt]) << left);
+        nxt += 1;
+        left += 8;
+        if (left < bits) {
+            buf += (intify(input[nxt]) << left);
+            nxt += 1;
+            left += 8;
+        }
+        unsigned int code = buf & mask;
+        // std::cout << "bmc " << buf << ' ' << mask << ' ' << code << '\n';
+        buf >>= bits;
+        left -= bits;
+
+        if ((code == 256) && flags) {
+            unsigned int rem = (nxt - mark) % bits;
+            if (rem) {
+                rem = bits - rem;
+                if (rem > inlen - nxt) {
+                    break;
+                }
+                nxt += rem;
+            }
+            buf = 0;
+            left = 0;
+
+            mark = nxt;
+
+            bits = 9;
+            mask = 0x1ff;
+            fend = 255;
+            continue;
+        }
+
+        unsigned int temp = code;
+        // std::cout << "code " << code << '\n';
+        // std::string stck;
+
+        if (code > fend) {
+            // stck.push_back(fin);
+            code = prev;
+        }
+
+        while (code >= 256) {
+            // stck.push_back(suffix[code]);
+            code = prefix[code];
+        }
+
+        // stck.push_back(code);
+        fin = code;
+
+        // перечитать дяц и все переисать на интедкс
+        if (fend < mask) {
+            fend += 1;
+            prefix[fend] = prev;
+            suffix[fend] = fin;
+            gcs_index.push_back(gcs.rules.size());
+            rule_num[fend] = gcs_index.back();
+
+            if (rule_num[prev] != 0 && rule_num[prev] != 1) {
+                // std::cout << "SANITY CHECK " << suffix[fend] << ' ' << code << '\n';
+                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, rule_num[prev], suffix[fend]));
+                // std::cout << "RULE ASS GCS   " << rule_num[fend] + 1 << ' ' << rule_num[prev] << ' ' << suffix[fend] << "   "  << gcs.rules.size() << "    " << gcs.rules.back().decompress() << '\n';
+            } else {
+                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend]));
+                // std::cout << "RULE   " << rule_num[fend] << ' ' << suffix[fend] << '\n';
+            }
+            fin_list.push_back(gcs_index.back());
+            // std::cout << "add fin: " << gcs_index.back() << '\n';
+            // std::cout << "ADD " << fend << ' ' << prev << ' ' << fin << '\n';
+        }
+        // else {
+        //    std::cout << "ELSE FEND " << fend << ' ' << rule_num[fend] << '\n';
+        // }
+        prev = temp;
+        // for (int i = (int)stck.size() - 1; i >= 0; --i) {
+        //     put.push_back(stck[i]);
+        // }
+        // std::cout << "stack " << stck << std::endl;
+    }
+    // for (auto i: fin_list) {
+    //     std::cout << "qqqqq " << gcs.rules[i].decompress() << '\n';
+    // }
+    unsigned int last_fin_rule = gcs_index[fin_list[0]];
+    for (unsigned int i = 1; i < fin_list.size(); ++i) {
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, gcs_index.back() + 1, last_fin_rule, fin_list[i]));
+        // std::cout << "RULE CONC GCS   " << gcs_index.back() + 1 << "   " <<  last_fin_rule << ' ' << fin_list[i] << "   "  << '\n';
+        last_fin_rule = gcs_index.back();
+    }
+
+    gcs.final_rule = last_fin_rule;
+    // std::cout << "FINAL RULE IS " << gcs.final_rule << ' ' << gcs.rules.size() << '\n';
+    auto res = gcs.rules[gcs.final_rule].decompress();
+    // std::cout << "RES:  " <<  res << '\n';
+    for (unsigned int i = 0; i < gcs.rules.size(); ++i) {
+        // std::cout << 'r' << i << ' ' << gcs.rules[i].is_base << ' ' << gcs.rules[i].value << ' ' << gcs.rules[i].first_symbol << ' ' << gcs.rules[i].second_symbol << '\n';
+    }
     return gcs;
 }
 

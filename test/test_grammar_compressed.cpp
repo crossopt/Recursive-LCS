@@ -243,6 +243,51 @@ TEST(GrammarCompressedTest, LZGrammarStringIsCompressedQuadraticallyByLZWCompres
     }
 }
 
+TEST(GrammarCompressedTest, StringDecompressReturnsCorrectStringTest) {
+    ASSERT_EQ(get_uncompress_string("../test_files/f1.Z"), "aaaaaaaa\n");
+    ASSERT_EQ(get_uncompress_string("../test_files/f2.Z"), "This is a test file!\n");
+    ASSERT_EQ(get_uncompress_string("../test_files/f3.Z"), "aaaabaabcaabcd");
+    ASSERT_EQ(get_uncompress_string("../test_files/f4.Z"), "aaaaaaaaaaaaaaaaaaaa");
+}
+
+TEST(GrammarCompressedTest, StringAaaaReturnsCorrectGrammarTest) {
+    std::string aa = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    GrammarCompressedStorage gcs = get_aaaa(40);
+    ASSERT_EQ(gcs.rules[gcs.final_rule].decompress(), aa);
+
+    std::string aa2 = "aaaa";
+    GrammarCompressedStorage gcs2 = get_aaaa(4);
+    ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(), aa2);
+
+
+    GrammarCompressedStorage gcs3 = get_aaaa(536800000);
+    std::cout << gcs3.final_rule << '\n';
+}
+
+TEST(GrammarCompressedTest, GrammarDecompressReturnsCorrectStringTest) {
+    // auto gcs1 = get_compress_string("../test_files/f1.Z");
+    // for (unsigned int i = 0; i < gcs1.rules.size(); ++i) {
+    //     gcs1.rules[i].gc_storage = gcs1;
+    // }  
+
+    // for (unsigned int i = 0; i < gcs1.rules.size(); ++i) {
+    //     std::cout << 'x' << i << ' ' << gcs1.rules[i].is_base << ' ' << gcs1.rules[i].value << ' ' << gcs1.rules[i].first_symbol << ' ' << gcs1.rules[i].second_symbol << '\n';
+    // }
+
+    // auto res = gcs1.rules[gcs1.final_rule].decompress();
+    // std::cout << "RES OUTSIDE:  " <<  res << '\n';
+    // ASSERT_EQ(gcs1.rules[gcs1.final_rule].decompress(), "aaaaaaaa\n");
+
+    // auto gcs2 = get_compress_string("../test_files/f2.Z");
+    // ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(), "This is a test file!\n");
+
+    // auto gcs3 = get_compress_string("../test_files/f3.Z");
+    // ASSERT_EQ(gcs3.rules[gcs3.final_rule].decompress(), "aaaabaabcaabcd");
+
+    // auto gcs4 = get_compress_string("../test_files/f4.Z");
+    // ASSERT_EQ(gcs4.rules[gcs4.final_rule].decompress(), "aaaaaaaaaaaaaaaaaaaa");
+}
+
 }  // namespace
 }  // namespace gc
 }  // namespace LCS
