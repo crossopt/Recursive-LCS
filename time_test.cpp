@@ -225,10 +225,8 @@ int main() {
     // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 0);
 
 
-    test_aa(generate_random_abc_string(16), 100000, 0);
-    test_aa(generate_random_abc_string(16), 1000000, 0);
-    test_aa(generate_random_abc_string(16), 10000000, 0);
-    test_aa(generate_random_abc_string(16), 536800000, 0);
-    // test_aa(generate_random_abc_string(16), 1ll * 1000 * 1000 * 1000 * 1000, 1);
+    test_aa(generate_random_abc_string(30), 8388608, 0);
+    test_aa(generate_random_abc_string(30), 1ll * 536870000, 0);
+    test_aa(generate_random_abc_string(30), 1ll * 536800000 * 10, 0);
     return 0;
 }

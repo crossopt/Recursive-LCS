@@ -154,17 +154,17 @@ GrammarCompressedStorage LZW(const std::string &s) {
 
 GrammarCompressedStorage get_aaaa(unsigned long long number) {
     GrammarCompressedStorage gcs = GrammarCompressedStorage();
-    std::vector <unsigned int> gcs_index(1);
-    int current_entry = 0;  // The entry corresponding to the current buffer.
-    std::vector <int> next_entry(ASCII_SIZE + 1, 0);
+    std::vector <unsigned long long> gcs_index(1);
+    unsigned long long current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <unsigned long long> next_entry(ASCII_SIZE + 1, 0);
     // Initialize LZW alphabet.
     next_entry[0] = 'a' + 1;
     for (unsigned int i = 0; i < ASCII_SIZE; ++i) {
         gcs_index.push_back(gcs.rules.size());
         gcs.add_rule(GrammarCompressed(gcs, i + 1, i));
     }
-    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
-    for (unsigned int i = 0; i < number; ++i) {
+    unsigned long long last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned long long i = 0; i < number; ++i) {
         // int c = 'a';
         if (next_entry[current_entry] != 0 && i + 1 != number) {
             // If current prefix + c is in the dictionary, and the string has not ended.
