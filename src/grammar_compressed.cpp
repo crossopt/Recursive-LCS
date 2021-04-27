@@ -17,11 +17,11 @@ const int ASCII_SIZE = 256;
 
 // Returns the nth LZ78 grammar string. A LZ78 grammar string is a specially constructed string
 // that is compressed quadratically by the LZ78 compression.
-std::string get_lz78_grammar_string(unsigned int number) {
-    std::vector <std::string> trie_entries(number + 1);
-    trie_entries[0] = "A";
+std::string get_lz78_grammar_string(unsigned int number, unsigned int repeat_number) {
+    std::vector <std::string> trie_entries(number + 1, "");
+    trie_entries[0] += (char)('A' + repeat_number % ALPHABET_SIZE);
     for (unsigned int i = 1; i <= number; ++i) {
-        trie_entries[i] = trie_entries[i - 1] + (char)('A' + i % ALPHABET_SIZE);
+        trie_entries[i] = trie_entries[i - 1] + (char)('A' + (repeat_number + i) % ALPHABET_SIZE);
     }
     std::string result;
     for (unsigned int i = 0; i <= number; ++i) {
@@ -32,11 +32,12 @@ std::string get_lz78_grammar_string(unsigned int number) {
 
 // Returns the nth LZW grammar string. A LZW grammar string is a specially constructed string
 // that is compressed quadratically by the LZW compression.
-std::string get_lzw_grammar_string(unsigned int number) {
-    std::vector <std::string> trie_entries(number + 1);
-    trie_entries[0] = "AA";
+std::string get_lzw_grammar_string(unsigned int number, unsigned int repeat_number) {
+    std::vector <std::string> trie_entries(number + 1, "");
+    trie_entries[0] += (char)('A' + repeat_number % ALPHABET_SIZE);
+    trie_entries[0] += (char)('A' + repeat_number % ALPHABET_SIZE);
     for (unsigned int i = 1; i <= number; ++i) {
-        trie_entries[i] = trie_entries[i - 1] + (char)('A' + i % ALPHABET_SIZE);
+        trie_entries[i] = trie_entries[i - 1] + (char)('A' + (i + repeat_number) % ALPHABET_SIZE);
     }
     std::string result;
     for (unsigned int i = 0; i <= number; ++i) {

@@ -98,7 +98,6 @@ void test_fibonacci(const std::string &a, unsigned b_number, bool dbg) {
 
 void test_aa(const std::string &a, unsigned long long b_number, bool dbg) {
     LCS::gc::GrammarCompressedStorage b = LCS::gc::get_aaaa(b_number);
-    std::cout << "GOT string " << b.final_rule + 1 << '\n';
     auto recursive_time = time_recursive(a, b, dbg);
     if (dbg) {
         std::cout << "Time for recursive kernel is " << recursive_time << "ms" << std::endl;
@@ -165,6 +164,28 @@ void test_unix_compress(const std::string &p, const std::string &file_name, bool
     }
 }
 
+void test_graph(unsigned int pattern_size, unsigned lz_number, unsigned int repeats, bool dbg) {
+    double timedp = 0, timelzw = 0; int grammar_length = 0;
+    for (unsigned int i = 0; i < repeats; ++i) {
+        std::string p = generate_random_abc_string(pattern_size);
+        std::string t = LCS::gc::get_lzw_grammar_string(lz_number, i);
+        LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::LZW(t);
+        grammar_length = compress_w.final_rule + 3;
+        auto lzw_time = time_recursive(p, compress_w, dbg);
+        auto dp_time = time_dp(p, t, dbg);
+        if (dbg) {
+            std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+            std::cout << "Time for lzw recursive kernel is " << lzw_time << "ms" << std::endl;
+        }
+        timedp += dp_time; timelzw += lzw_time;
+    }
+    // to-python-format: pattern length (const), grammar length for lzw, lzw time, dp time
+    if (!dbg) {
+        std::cout << pattern_size << '&' << grammar_length << '&' << 
+        timelzw / repeats << '&' << timedp / repeats << std::endl;
+    }
+}
+
 
 int main() {
     // test_fibonacci(generate_random_abc_string(4), 14, 0);
@@ -225,8 +246,13 @@ int main() {
     // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 0);
 
 
-    test_aa(generate_random_abc_string(30), 8388608, 0);
-    test_aa(generate_random_abc_string(30), 1ll * 536870000, 0);
-    test_aa(generate_random_abc_string(30), 1ll * 536800000 * 10, 0);
+    // test_aa(generate_random_abc_string(30), 8388608, 0);
+    // test_aa(generate_random_abc_string(30), 1ll * 536870000, 0);
+    // test_aa(generate_random_abc_string(30), 1ll * 536800000 * 10, 0);
+
+    srand(time(0));
+    for (unsigned int i = 1; i < 100000; i += 100) {
+        test_graph(16, i, 20, 0);
+    }
     return 0;
 }
