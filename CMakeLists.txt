@@ -24,6 +24,12 @@ target_link_libraries(lcs llcs)
 add_executable(time_test time_test.cpp)
 target_link_libraries(time_test llcs)
 
+add_executable(dp_test dp_main.cpp)
+target_link_libraries(dp_test llcs)
+
+add_executable(lz_test lz_main.cpp)
+target_link_libraries(lz_test llcs)
+
 #GTest
 enable_testing()
 include(GoogleTest)
