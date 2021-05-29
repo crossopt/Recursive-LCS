@@ -12,7 +12,20 @@ namespace LCS {
 namespace gc {
 
 const int ALPHABET_SIZE = 26;
+const int ALPHABET_SIZE2 = 27;
 const int ASCII_SIZE = 256;
+
+
+int intify(char c) {
+    return (int)c >= 0 ? (int)c : 256 + (int)c;
+}
+
+std::string read_file_contents(const std::string &file_name) {
+    std::ifstream t(file_name);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return buffer.str();
+}
 
 
 // Returns the nth LZ78 grammar string. A LZ78 grammar string is a specially constructed string
@@ -70,7 +83,15 @@ GrammarCompressedStorage LZ78(const std::string &s) {
     std::vector <std::vector <int>> next_entry(1, std::vector <int> (ALPHABET_SIZE, 0));
     int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
     for (unsigned int i = 0; i < s.size(); ++i) {
-        int c = s[i] - 'A';
+        // int c = s[i] - 'A';
+        int c;
+        if ('A' <= c && c <= 'Z') {
+            c = s[i] - 'A';
+        } else if ('a' <= c && c <= 'z') {
+            c = s[i] - 'a';
+        } else {
+            c = 0;
+        }
         if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
             // If current prefix + c is in the dictionary, and the string has not ended.
             current_entry = next_entry[current_entry][c];
@@ -124,7 +145,14 @@ GrammarCompressedStorage LZW(const std::string &s) {
     }
     int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
     for (unsigned int i = 0; i < s.size(); ++i) {
-        int c = s[i] - 'A';
+        int c;
+        if ('A' <= c && c <= 'Z') {
+            c = s[i] - 'A';
+        } else if ('a' <= c && c <= 'z') {
+            c = s[i] - 'a';
+        } else {
+            c = 0;
+        }
         if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
             // If current prefix + c is in the dictionary, and the string has not ended.
             current_entry = next_entry[current_entry][c];
@@ -134,6 +162,93 @@ GrammarCompressedStorage LZW(const std::string &s) {
             gcs_index.push_back(gcs.rules.size());
             gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], gcs_index[dict_char]));
             next_entry.push_back(std::vector <int> (ALPHABET_SIZE, 0));
+            next_entry[current_entry][c] = dict_entry;
+            current_entry = 0;
+
+            // Concatenate two dictionary strings, if necessary.
+            if (!last_string_entry) {
+                last_string_entry = dict_entry;
+            } else {
+                int string_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, string_entry, gcs_index[last_string_entry], gcs_index[dict_entry]));
+                next_entry.resize(next_entry.size() + 1);
+                last_string_entry = string_entry;
+            }
+        }
+    }
+    gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
+}
+
+// Compress the string s with alphabet characters 'A'-'Z' using LZW compression.
+GrammarCompressedStorage LZW2(const std::string &s) {
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
+    int current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <std::vector <int>> next_entry(ALPHABET_SIZE2 + 1, std::vector <int> (ALPHABET_SIZE2, 0));
+    // Initialize LZW alphabet.
+    for (unsigned int i = 0; i < ALPHABET_SIZE2; ++i) {
+        next_entry[0][i] = i + 1;
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, i + 1, (char)('a' + i)));
+    }
+    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned int i = 0; i < s.size(); ++i) {
+        int c = s[i] - 'a';
+        if (c < 0 || c >= 26) c = 26;
+        if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
+            // If current prefix + c is in the dictionary, and the string has not ended.
+            current_entry = next_entry[current_entry][c];
+        } else {
+            // Add the new string (current_entry + c) to the dictionary.
+            int dict_char = c + 1, dict_entry = gcs_index.size();
+            gcs_index.push_back(gcs.rules.size());
+            gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], gcs_index[dict_char]));
+            next_entry.push_back(std::vector <int> (ALPHABET_SIZE2, 0));
+            next_entry[current_entry][c] = dict_entry;
+            current_entry = 0;
+
+            // Concatenate two dictionary strings, if necessary.
+            if (!last_string_entry) {
+                last_string_entry = dict_entry;
+            } else {
+                int string_entry = gcs_index.size();
+                gcs_index.push_back(gcs.rules.size());
+                gcs.add_rule(GrammarCompressed(gcs, string_entry, gcs_index[last_string_entry], gcs_index[dict_entry]));
+                next_entry.resize(next_entry.size() + 1);
+                last_string_entry = string_entry;
+            }
+        }
+    }
+    gcs.final_rule = gcs_index[last_string_entry];
+    return gcs;
+}
+
+// Compress the string s with all ASCII characters using LZW compression.
+GrammarCompressedStorage LZWASCII(const std::string &s) {
+    GrammarCompressedStorage gcs = GrammarCompressedStorage();
+    std::vector <unsigned int> gcs_index(1);
+    int current_entry = 0;  // The entry corresponding to the current buffer.
+    std::vector <std::vector <int>> next_entry(ASCII_SIZE + 1, std::vector <int> (ASCII_SIZE, 0));
+    // Initialize LZW alphabet.
+    for (unsigned int i = 0; i < ASCII_SIZE; ++i) {
+        next_entry[0][i] = i + 1;
+        gcs_index.push_back(gcs.rules.size());
+        gcs.add_rule(GrammarCompressed(gcs, i + 1, i));
+    }
+    int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
+    for (unsigned int i = 0; i < s.size(); ++i) {
+        int c = intify(s[i]);
+        if (next_entry[current_entry][c] != 0 && i + 1 != s.size()) {
+            // If current prefix + c is in the dictionary, and the string has not ended.
+            current_entry = next_entry[current_entry][c];
+        } else {
+            // Add the new string (current_entry + c) to the dictionary.
+            int dict_char = c + 1, dict_entry = gcs_index.size();
+            gcs_index.push_back(gcs.rules.size());
+            gcs.add_rule(GrammarCompressed(gcs, dict_entry, gcs_index[current_entry], gcs_index[dict_char]));
+            next_entry.push_back(std::vector <int> (ASCII_SIZE, 0));
             next_entry[current_entry][c] = dict_entry;
             current_entry = 0;
 
@@ -195,18 +310,6 @@ GrammarCompressedStorage get_aaaa(unsigned long long number) {
     gcs.final_rule = gcs_index[last_string_entry];
     return gcs;
 }
-
-int intify(char c) {
-    return (int)c >= 0 ? (int)c : 256 + (int)c;
-}
-
-std::string read_file_contents(const std::string &file_name) {
-    std::ifstream t(file_name);
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    return buffer.str();
-}
-
   
 /*
   Uncompress file compressed with UNIX Z-compress.

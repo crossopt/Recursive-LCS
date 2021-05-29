@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include "lcs_kernel.h"
 #include "grammar_compressed.h"
@@ -186,8 +188,84 @@ void test_graph(unsigned int pattern_size, unsigned lz_number, unsigned int repe
     }
 }
 
+void test_graph_lz78(unsigned int pattern_size, unsigned lz_number, unsigned int repeats, bool dbg) {
+    double timedp = 0, timelz78 = 0; int grammar_length = 0;
+    for (unsigned int i = 0; i < repeats; ++i) {
+        std::string p = generate_random_abc_string(pattern_size);
+        std::string t = LCS::gc::get_lz78_grammar_string(lz_number, i);
+        LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::LZ78(t);
+        grammar_length = compress_w.final_rule + 3;
+        auto lz78_time = time_recursive(p, compress_w, dbg);
+        auto dp_time = time_dp(p, t, dbg);
+        if (dbg) {
+            std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+            std::cout << "Time for lz78 recursive kernel is " << lz78_time << "ms" << std::endl;
+        }
+        timedp += dp_time; timelz78 += lz78_time;
+    }
+    // to-python-format: pattern length (const), grammar length for lz78, lz78 time, dp time
+    if (!dbg) {
+        std::cout << pattern_size << '&' << grammar_length << '&' << 
+        timelz78 / repeats << '&' << timedp / repeats << std::endl;
+    }
+}
+
+void test_bad_graph(unsigned int pattern_size, const std::string &tlist, bool dbg) {
+    double timedp = 0, timelzw = 0;
+    int grammar_length = 0;
+    unsigned int repeats = 20;
+    unsigned int tlen = tlist.size() / 20;
+    for (unsigned int i = 0; i < repeats; ++i) {
+        std::string t = tlist.substr(i * tlen, tlen);
+        std::string p = generate_random_abc_string(pattern_size);
+        LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::LZW(t); // TODO LZW2
+        grammar_length = compress_w.final_rule + 3;
+        auto lzw_time = time_recursive(p, compress_w, dbg);
+        auto dp_time = time_dp(p, t, dbg);
+        if (dbg) {
+            std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+            std::cout << "Time for lzw recursive kernel is " << lzw_time << "ms" << std::endl;
+        }        
+        timedp += dp_time; timelzw += lzw_time;
+    }
+    // to-python-format: pattern length (const), grammar length for lzw, lzw time, dp time
+    if (!dbg) {
+        std::cout << pattern_size << '&' << grammar_length << '&' << 
+        timelzw / repeats << '&' << timedp / repeats<< std::endl;
+    }
+}
+
+void test_bad_graph_lz78(unsigned int pattern_size, const std::string &tlist, bool dbg) {
+    double timedp = 0, timelz78 = 0;
+    int grammar_length = 0;
+    unsigned int repeats = 20;
+    unsigned int tlen = tlist.size() / 20;
+    for (unsigned int i = 0; i < repeats; ++i) {
+        std::string t = tlist.substr(i * tlen, tlen);
+        std::string p = generate_random_abc_string(pattern_size);
+        LCS::gc::GrammarCompressedStorage compress_w = LCS::gc::LZ78(t);
+        grammar_length = compress_w.final_rule + 3;
+        auto lz78_time = time_recursive(p, compress_w, dbg);
+        auto dp_time = time_dp(p, t, dbg);
+        if (dbg) {
+            std::cout << "Time for dynamic programming is " << dp_time << "ms" << std::endl;
+            std::cout << "Time for lz78 recursive kernel is " << lz78_time << "ms" << std::endl;
+        }        
+        timedp += dp_time; timelz78 += lz78_time;
+    }
+    // to-python-format: pattern length (const), grammar length for lz78, lz78 time, dp time
+    if (!dbg) {
+        std::cout << pattern_size << '&' << grammar_length << '&' << 
+        timelz78 / repeats << '&' << timedp / repeats << std::endl;
+    }
+}
+
+
 
 int main() {
+    // All time tests that have been run for this code.
+    // This is not meant to be run simultaneously!
+
     // test_fibonacci(generate_random_abc_string(4), 14, 0);
     // test_fibonacci(generate_random_abc_string(16), 14, 0);
     // test_fibonacci(generate_random_abc_string(64), 14, 0);
@@ -251,8 +329,22 @@ int main() {
     // test_aa(generate_random_abc_string(30), 1ll * 536800000 * 10, 0);
 
     srand(time(0));
-    for (unsigned int i = 1; i < 100000; i += 100) {
-        test_graph(16, i, 20, 0);
+
+    // LZW & LZ78 generated runs
+    // for (unsigned int i = 1; i < 100000; i += 100) {
+    //     test_graph(16, i, 20, 0);
+    // }
+
+    std::ifstream t("../test_files/rand_large");
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    std::string all = buffer.str();
+
+    std::cerr << all.size() << '\n';
+    for (unsigned int i = 100000; 20 * i < all.size(); i += 300000) {
+        std::string ith = all.substr(0, 20 * i);
+        test_bad_graph_lz78(16, ith, 0);
     }
+
     return 0;
 }

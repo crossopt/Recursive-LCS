@@ -65,6 +65,8 @@ public:
 
 GrammarCompressedStorage LZ78(const std::string &s);
 GrammarCompressedStorage LZW(const std::string &s);
+GrammarCompressedStorage LZW2(const std::string &s);
+GrammarCompressedStorage LZWASCII(const std::string &s);
 std::string get_lz78_grammar_string(unsigned int number, unsigned int repeat_number = 0);
 std::string get_lzw_grammar_string(unsigned int number, unsigned int repeat_number = 0);
 std::string get_lz_grammar_string(unsigned int number);
