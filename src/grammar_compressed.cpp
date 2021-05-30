@@ -85,9 +85,9 @@ GrammarCompressedStorage LZ78(const std::string &s) {
     for (unsigned int i = 0; i < s.size(); ++i) {
         // int c = s[i] - 'A';
         int c;
-        if ('A' <= c && c <= 'Z') {
+        if ('A' <= s[i] && s[i] <= 'Z') {
             c = s[i] - 'A';
-        } else if ('a' <= c && c <= 'z') {
+        } else if ('a' <= s[i] && s[i] <= 'z') {
             c = s[i] - 'a';
         } else {
             c = 0;
@@ -146,9 +146,9 @@ GrammarCompressedStorage LZW(const std::string &s) {
     int last_string_entry = 0;  // The last entry corresponding to the piece of a string.
     for (unsigned int i = 0; i < s.size(); ++i) {
         int c;
-        if ('A' <= c && c <= 'Z') {
+        if ('A' <= s[i] && s[i] <= 'Z') {
             c = s[i] - 'A';
-        } else if ('a' <= c && c <= 'z') {
+        } else if ('a' <= s[i] && s[i] <= 'z') {
             c = s[i] - 'a';
         } else {
             c = 0;
@@ -607,11 +607,11 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
 
     gcs.final_rule = last_fin_rule;
     // std::cout << "FINAL RULE IS " << gcs.final_rule << ' ' << gcs.rules.size() << '\n';
-    auto res = gcs.rules[gcs.final_rule].decompress();
+    // auto res = gcs.rules[gcs.final_rule].decompress();
     // std::cout << "RES:  " <<  res << '\n';
-    for (unsigned int i = 0; i < gcs.rules.size(); ++i) {
+    // for (unsigned int i = 0; i < gcs.rules.size(); ++i) {
         // std::cout << 'r' << i << ' ' << gcs.rules[i].is_base << ' ' << gcs.rules[i].value << ' ' << gcs.rules[i].first_symbol << ' ' << gcs.rules[i].second_symbol << '\n';
-    }
+    // }
     return gcs;
 }
 

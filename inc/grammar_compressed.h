@@ -52,14 +52,14 @@ public:
 		second_symbol(second_symbol) {}
 
 	// Returns the decompressed string for the grammar.
-	std::string decompress() const {
+	std::string decompress(const GrammarCompressedStorage &gcs) const {
 		// if (is_base) {
 		// 	std::cout << "decompressing char rule " << number << " " << value << " " << std::string(1, value) << "\n";
 		// } else {
 		// 	std::cout << "decompressing rule " << number << " " <<  first_symbol << " " <<  second_symbol << "\n";
 		// }
-		return is_base ? std::string(1, value) : gc_storage.rules[first_symbol].decompress() 
-		                                       + gc_storage.rules[second_symbol].decompress();
+		return is_base ? std::string(1, value) : gcs.rules[first_symbol].decompress(gcs) 
+		                                       + gcs.rules[second_symbol].decompress(gcs);
 	}
 };
 

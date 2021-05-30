@@ -82,7 +82,7 @@ double time_recursive(const std::string &a, const LCS::gc::GrammarCompressedStor
 
 void test_fibonacci(const std::string &a, unsigned b_number, bool dbg) {
     LCS::gc::GrammarCompressedStorage b = generate_fib_string(b_number);
-    std::string b_string = b.rules[b.final_rule].decompress();
+    std::string b_string = b.rules[b.final_rule].decompress(b);
     if (dbg) {
         std::cout << "Times for LCS calculation for string lengths " << a.size() << " and " << b_string.size() << ":" << std::endl;
     }
@@ -311,17 +311,18 @@ int main() {
     // test_lzw(generate_random_alpha_string(64), 64 * 64, 0);
     // test_lzw(generate_random_alpha_string(256), 64 * 64, 0);
 
-    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t10.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t10.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t10.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t10.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t10.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t10.Z", 1);
 
-    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t9.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t9.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t9.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t9.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t9.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t9.Z", 1);
 
-    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t8.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t8.Z", 0);
-    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 0);
+    // test_unix_compress(generate_random_alpha_string(16), "../test_files/t8.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(64), "../test_files/t8.Z", 1);
+    // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 1);
+    return 0;
 
 
     // test_aa(generate_random_abc_string(30), 8388608, 0);
