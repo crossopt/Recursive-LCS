@@ -38,7 +38,8 @@ unsigned fib_string_storage_index(unsigned length, LCS::gc::GrammarCompressedSto
         return gc_storage.rules.size() - 1;
     }
 }
- 
+
+/*
 LCS::gc::GrammarCompressedStorage gc_fib_string(unsigned length) {
     LCS::gc::GrammarCompressedStorage storage = LCS::gc::GrammarCompressedStorage();
     unsigned index = fib_string_storage_index(length, storage);
@@ -163,11 +164,11 @@ TEST(GrammarCompressedTest, LZWComputesCorrectlyTest) {
     ASSERT_EQ(gc_lzw_string.rules[lower_left].decompress(gc_lzw_string), "AB");
     ASSERT_EQ(gc_lzw_string.rules[lower_right].decompress(gc_lzw_string), "AC");
     // Test that the decompression works correctly.
-    ASSERT_EQ(gc_lzw_string.rules[gc_lzw_string.final_rule].number, 26 + 5);
-    ASSERT_EQ(gc_lzw_string.rules[left].number, 26 + 3);
-    ASSERT_EQ(gc_lzw_string.rules[right].number, 26 + 4);
-    ASSERT_EQ(gc_lzw_string.rules[lower_left].number, 26 + 1);
-    ASSERT_EQ(gc_lzw_string.rules[lower_right].number, 26 + 2);
+    ASSERT_EQ(gc_lzw_string.rules[gc_lzw_string.final_rule].number, 27 + 5);
+    ASSERT_EQ(gc_lzw_string.rules[left].number, 27 + 3);
+    ASSERT_EQ(gc_lzw_string.rules[right].number, 27 + 4);
+    ASSERT_EQ(gc_lzw_string.rules[lower_left].number, 27 + 1);
+    ASSERT_EQ(gc_lzw_string.rules[lower_right].number, 27 + 2);
 }
 
 TEST(GrammarCompressedTest, LZ78GrammarStringIsCalculatedCorrectlyTest) {
@@ -214,8 +215,8 @@ TEST(GrammarCompressedTest, LZWGrammarStringIsCompressedQuadraticallyByLZWCompre
         std::string s = get_lzw_grammar_string(number);
         ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2 + number + 1);
         auto gc_lzw_string = LZW(s);
-        // Exactly n * 2 + 26: the alphabet rules, one rule per substring, one for concatenation.
-        ASSERT_EQ(gc_lzw_string.final_rule, number * 2 + 26);   
+        // Exactly n * 2 + 27: the alphabet rules, one rule per substring, one for concatenation.
+        ASSERT_EQ(gc_lzw_string.final_rule, number * 2 + 27);   
     }
 }
 
@@ -238,8 +239,8 @@ TEST(GrammarCompressedTest, LZGrammarStringIsCompressedQuadraticallyByLZWCompres
         ASSERT_EQ(s.size(), (number + 1) * (number + 2) / 2 + (number + 1) + 2);
         auto gc_lzw_string = LZW(s);
         // 2 original rules for 'ABAA': 'AB', 'AA'.
-        // Exactly n * 2 + 26: the alphabet rules, one rule per substring, one for concatenation.
-        ASSERT_EQ(gc_lzw_string.final_rule, 2 + number * 2 + 26);   
+        // Exactly n * 2 + 27: the alphabet rules, one rule per substring, one for concatenation.
+        ASSERT_EQ(gc_lzw_string.final_rule, 2 + number * 2 + 27);   
     }
 }
 
@@ -262,20 +263,24 @@ TEST(GrammarCompressedTest, StringAaaaReturnsCorrectGrammarTest) {
 
     GrammarCompressedStorage gcs3 = get_aaaa(536800000);
     std::cout << gcs3.final_rule << '\n';
-}
+} */
 
 TEST(GrammarCompressedTest, GrammarDecompressReturnsCorrectStringTest) {
-    auto gcs1 = get_compress_string("../test_files/f1.Z");
-    ASSERT_EQ(gcs1.rules[gcs1.final_rule].decompress(gcs1), "aaaaaaaa\n");
+    // auto gcs1 = get_compress_string("../test_files/f1.Z");
+    // ASSERT_EQ(gcs1.rules[gcs1.final_rule].decompress(gcs1), "aaaaaaaa\n");
 
-    auto gcs2 = get_compress_string("../test_files/f2.Z");
-    ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(gcs2), "This is a test file!\n");
+    // auto gcs2 = get_compress_string("../test_files/f2.Z");
+    // ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(gcs2), "This is a test file!\n");
 
+    auto str3 = get_uncompress_string("../test_files/f3.Z");
+    std::cout << "break\n\n\n\n\n\n";
     auto gcs3 = get_compress_string("../test_files/f3.Z");
     ASSERT_EQ(gcs3.rules[gcs3.final_rule].decompress(gcs3), "aaaabaabcaabcd");
+    std::cout << "break\n\n\n\n\n\n";
 
-    auto gcs4 = get_compress_string("../test_files/f4.Z");
-    ASSERT_EQ(gcs4.rules[gcs4.final_rule].decompress(gcs4), "aaaaaaaaaaaaaaaa");
+    // auto gcs4 = get_compress_string("../test_files/f4.Z");
+    // auto str = get_uncompress_string("../test_files/f4.Z");
+    // ASSERT_EQ(gcs4.rules[gcs4.final_rule].decompress(gcs4), "aaaaaaaaaaaaaaaaaaaa"); // 20
 } 
 
 }  // namespace

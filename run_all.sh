@@ -2,6 +2,7 @@
 
 for (( c=200000; c<=1000000000; c += 200000 ))
 do
+	# for cycle is too long, break when enough
 	time_lz=0
 	time_dp=0
 	time_agrep=0
@@ -11,8 +12,13 @@ do
 
 	    # Generate pattern
 	    pattern=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-	    # Generate compressed file
+	    # Generate compressed file TODO both types
 	    printf 'a%.0s' $(seq 1 $c) > file
+	    # Generation: fake texts
+	    # echo $c $i | python3 zgen.py
+	    # Generation: real texts
+	    # st=$((($i * $c)))
+	    # cat test | tail -c +$st | head -c $c > file
 	    compress -f file
 	    lenf=$(cat file.Z | wc -c)
 
