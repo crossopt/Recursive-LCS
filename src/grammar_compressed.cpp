@@ -334,17 +334,21 @@ std::string get_uncompress_string(const std::string &file_name) {
         unsigned int temp = code;
         // std::cout << "code " << code << '\n';
         std::string stck;
+        // std::cout << code << " stack breakdown: "; 
 
         if (code > fend) {
             stck.push_back(fin);
+            // std::cout << 'F' << fin << ' ';
             code = prev;
         }
 
         while (code >= 256) {
             stck.push_back(suffix[code]);
+            // std::cout << '(' << code << ')' << suffix[code] << ' ';
             code = prefix[code];
         }
 
+        // std::cout << 'N' << code << '\n';
         stck.push_back(code);
         fin = code;
 
@@ -352,15 +356,17 @@ std::string get_uncompress_string(const std::string &file_name) {
             fend += 1;
             prefix[fend] = prev;
             suffix[fend] = fin;
-            std::cout << "OK ADD " << fend << ' ' << prev << ' ' << fin << '\n';
-            std::cout << "concat " << prev << ' ' << (char)fin << '\n';
+            // std::cout << "add rule here " << fend << ' ' << prev << ' ' << fin << '\n';
+            // std::cout << "OK ADD " << fend << ' ' << prev << ' ' << fin << '\n';
+            // std::cout << "concat " << prev << ' ' << (char)fin << '\n';
         }
         prev = temp;
         for (int i = (int)stck.size() - 1; i >= 0; --i) {
             put.push_back(stck[i]);
         }
-        std::cout << "stack " << stck  << ' ' << code << std::endl;
-        std::cout << "NOW NXT IS " << nxt << '\n';
+        std::reverse(stck.begin(), stck.end());
+        // std::cout << "stack " << stck  << ' ' << code << std::endl;
+        // std::cout << "NOW NXT IS " << nxt << '\n';
     }
     return put;
 }
@@ -408,7 +414,7 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
     std::vector <unsigned int> fin_list;
     fin_list.push_back(fin + 1);
     // rule_num[fin] = fin;
-    std::cout << "fin " << fin << '\n';
+    // std::cout << "fin " << fin << '\n';
 
     unsigned int mark = 3, nxt = 5;
     while (nxt < inlen) {
@@ -441,6 +447,7 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
             left += 8;
         }
         unsigned int code = buf & mask;
+        // std::cout << "decode " << code << '\n';
         // std::cout << "bmc " << buf << ' ' << mask << ' ' << code << '\n';
         buf >>= bits;
         left -= bits;
@@ -469,14 +476,15 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
         // std::cout << "code " << code << '\n';
         // std::string stck;
 
-        bool add_fin = 0, f_to_add = 0;
+        bool add_fin = 0; unsigned int f_to_add = 0;
         if (code > fend) {
             // stck.push_back(fin);
-            std::cout << "ADD FIN " << fin << '\n';
+            // std::cout << "ADD FIN " << fin << '\n';
             add_fin = 1; f_to_add = fin;
             code = prev;
         }
 
+        unsigned int prff = code;
         while (code >= 256) {
             // stck.push_back(suffix[code]);
             code = prefix[code];
@@ -485,57 +493,68 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
         // stck.push_back(code);
         fin = code;
 
-        // перечитать дяц и все переисать на интедкс
         if (fend < mask) {
-            std::cout  << "add rule here\n";
             fend += 1;
             prefix[fend] = prev;
             suffix[fend] = fin;
+            // std::cout  << "add rule here " << fend << ' ' << prev << ' ' << fin << '\n';
             gcs_index.push_back(gcs.rules.size());
-            rule_num[fend] = gcs_index.back();
-            // {suffix}, prev rule?
-            if (rule_num[prev] != 0 && rule_num[prev] != 1) {
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend], rule_num[prev]));
-            } else if (false) { // prev is one symbol
-                std::cerr << "FUCK "  << " prev is " << prev << '\n';
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend], prev));
-            } else { // empty?
-                std::cerr << "FUCK "  << " prev is " << prev << '\n';
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend]));
-            }
-            if (add_fin && false) {
-                // TODO!
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 2, rule_num[fend] + 1, f_to_add));
-                rule_num[fend]++; gcs_index.back()++;
-            }
-
-            /* if (rule_num[prev] != 0 && rule_num[prev] != 1) {
-                // std::cout << "SANITY CHECK " << suffix[fend] << ' ' << code << '\n';
+            rule_num[fend] = gcs_index.back();// std::cout << "rnp " << fend << ' ' << rule_num[fend] << '\n';
+            unsigned int prf = prff; // prefix[prff];
+            // std::cout << " prev " << prff << ' ' << prefix[prff] << " rule_num_prev " << rule_num[prff] << '\n';
+            
+            // Add to dict: prefix step to prev
+            if (rule_num[prev]) {
                 gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, rule_num[prev], suffix[fend]));
-                // std::cout << "RULE ASS GCS   " << rule_num[fend] + 1 << ' ' << rule_num[prev] << ' ' << suffix[fend] << "   "  << gcs.rules.size() << "    " << gcs.rules.back().decompress() << '\n';
+                gcs_index.back() += 1;
             } else {
+                rule_num[fend] = suffix[fend];
+            }
 
+            // Add to answer: backtracking from code prefixwise
+             if (prf != 0 && rule_num[prf] != 0) {
+             // rule_num[prev] != 0 && rule_num[prev] != 1) {
+              gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend], rule_num[prf]));
+            } else {
                 gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend]));
-                // std::cout << "RULE   " << rule_num[fend] << ' ' << suffix[fend] << '\n';
-                std::cout << "prev is " << prev << " (fake)  ";
-            } */
-            fin_list.push_back(gcs_index.back());
-            std::cout << "added rule " << gcs.rules[gcs_index.back()].decompress(gcs) << '\n';
-            std::cout << "add fin: " << gcs_index.back() << '\n';
-            std::cout << "ADD " << fend << ' ' << prev << ' ' << fin << '\n';
+            }
+            if (add_fin) {
+                // TODO!
+
+                // std::cout << "f to add " << f_to_add << '\n';
+                gcs.add_rule(GrammarCompressed(gcs, gcs_index.back() + 1, rule_num[fend], f_to_add));
+                // rule_num[fend]++;
+                // gcs_index.back()++;
+                // std::cout << "added phantom rule\n";
+            }
+
+            //  if (rule_num[prev] != 0 && rule_num[prev] != 1) {
+            //     // std::cout << "SANITY CHECK " << suffix[fend] << ' ' << code << '\n';
+            //     gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, rule_num[prev], suffix[fend]));
+            //     // std::cout << "RULE ASS GCS   " << rule_num[fend] + 1 << ' ' << rule_num[prev] << ' ' << suffix[fend] << "   "  << gcs.rules.size() << "    " << gcs.rules.back().decompress() << '\n';
+            // } else {
+
+            //     gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend]));
+            //     // std::cout << "RULE   " << rule_num[fend] << ' ' << suffix[fend] << '\n';
+            //     // std::cout << "prev is " << prev << " (fake)  ";
+            // } 
+            unsigned int myind = gcs_index.back() + add_fin;
+            // std::cout << "ind " << myind << '\n';
+            fin_list.push_back(myind);
+            // std::cout << "stack ";
+            // std::cout << gcs.rules[myind].decompress(gcs) << '\n';
+            // std::cout << "add fin: " << myind << '\n';
+            // std::cout << "ADD " << fend << ' ' << prev << ' ' << fin << '\n';
         }
         // else {
-        //    std::cout << "ELSE FEND " << fend << ' ' << rule_num[fend] << '\n';
+           // std::cout << "ELSE FEND " << fend << ' ' << rule_num[fend] << '\n';
         // }
         prev = temp;
-        std::cout << "NOW NXT IS " << nxt << '\n';
+        // std::cout << "NOW NXT IS " << nxt << '\n';
         // for (int i = (int)stck.size() - 1; i >= 0; --i) {
         //     put.push_back(stck[i]);
         // }
         // std::cout << "stack " << stck << std::endl;
-    }
-    for (auto i: fin_list) {
-        std::cout << "qqqqq " << gcs.rules[i].decompress(gcs) << '\n';
     }
     unsigned int last_fin_rule = gcs_index[fin_list[0]];
     for (unsigned int i = 1; i < fin_list.size(); ++i) {

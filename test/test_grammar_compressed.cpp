@@ -39,7 +39,6 @@ unsigned fib_string_storage_index(unsigned length, LCS::gc::GrammarCompressedSto
     }
 }
 
-/*
 LCS::gc::GrammarCompressedStorage gc_fib_string(unsigned length) {
     LCS::gc::GrammarCompressedStorage storage = LCS::gc::GrammarCompressedStorage();
     unsigned index = fib_string_storage_index(length, storage);
@@ -263,24 +262,42 @@ TEST(GrammarCompressedTest, StringAaaaReturnsCorrectGrammarTest) {
 
     GrammarCompressedStorage gcs3 = get_aaaa(536800000);
     std::cout << gcs3.final_rule << '\n';
-} */
+}
 
 TEST(GrammarCompressedTest, GrammarDecompressReturnsCorrectStringTest) {
-    // auto gcs1 = get_compress_string("../test_files/f1.Z");
-    // ASSERT_EQ(gcs1.rules[gcs1.final_rule].decompress(gcs1), "aaaaaaaa\n");
+    auto gcs1 = get_compress_string("../test_files/f1.Z");
+    ASSERT_EQ(gcs1.rules[gcs1.final_rule].decompress(gcs1), "aaaaaaaa\n");
 
-    // auto gcs2 = get_compress_string("../test_files/f2.Z");
-    // ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(gcs2), "This is a test file!\n");
+    auto gcs2 = get_compress_string("../test_files/f2.Z");
+    ASSERT_EQ(gcs2.rules[gcs2.final_rule].decompress(gcs2), "This is a test file!\n");
 
-    auto str3 = get_uncompress_string("../test_files/f3.Z");
-    std::cout << "break\n\n\n\n\n\n";
     auto gcs3 = get_compress_string("../test_files/f3.Z");
     ASSERT_EQ(gcs3.rules[gcs3.final_rule].decompress(gcs3), "aaaabaabcaabcd");
-    std::cout << "break\n\n\n\n\n\n";
 
-    // auto gcs4 = get_compress_string("../test_files/f4.Z");
-    // auto str = get_uncompress_string("../test_files/f4.Z");
-    // ASSERT_EQ(gcs4.rules[gcs4.final_rule].decompress(gcs4), "aaaaaaaaaaaaaaaaaaaa"); // 20
+    auto gcs4 = get_compress_string("../test_files/f4.Z");
+    ASSERT_EQ(gcs4.rules[gcs4.final_rule].decompress(gcs4), "aaaaaaaaaaaaaaaaaaaa"); // 20
+}
+
+TEST(GrammarCompressedTest, GrammarDecompressMatchesStringDecompress) {
+    auto gcs6 = get_compress_string("../test_files/t6.Z");
+    auto str6 = get_uncompress_string("../test_files/t6.Z");
+    ASSERT_EQ(gcs6.rules[gcs6.final_rule].decompress(gcs6), str6);
+
+    auto gcs7 = get_compress_string("../test_files/t7.Z");
+    auto str7 = get_uncompress_string("../test_files/t7.Z");
+    ASSERT_EQ(gcs7.rules[gcs7.final_rule].decompress(gcs7), str7);
+
+    auto gcs8 = get_compress_string("../test_files/t8.Z");
+    auto str8 = get_uncompress_string("../test_files/t8.Z");
+    ASSERT_EQ(gcs8.rules[gcs8.final_rule].decompress(gcs8), str8);
+
+    auto gcs9 = get_compress_string("../test_files/t9.Z");
+    auto str9 = get_uncompress_string("../test_files/t9.Z");
+    ASSERT_EQ(gcs9.rules[gcs9.final_rule].decompress(gcs9), str9);
+
+    auto gcs10 = get_compress_string("../test_files/t10.Z");
+    auto str10 = get_uncompress_string("../test_files/t10.Z");
+    ASSERT_EQ(gcs10.rules[gcs10.final_rule].decompress(gcs10), str10);
 } 
 
 }  // namespace
