@@ -300,6 +300,30 @@ TEST(GrammarCompressedTest, GrammarDecompressMatchesStringDecompress) {
     ASSERT_EQ(gcs10.rules[gcs10.final_rule].decompress(gcs10), str10);
 } 
 
+TEST(GrammarCompressedTest, CompressLcsIsCorrectTest) {
+    std::string s = "is a file X";
+    auto gcs = get_compress_string("../test_files/f2.Z");
+    auto gc_string = get_uncompress_string("../test_files/f2.Z");
+    auto kernel = GCKernel(s, gcs);
+    ASSERT_EQ(kernel::dp_lcs(s, gc_string), kernel.lcs);
+}
+
+TEST(GrammarCompressedTest, CompressLcsFullMatchIsCorrectTest) {
+    std::string s = "aaaabaabcaabcd";
+    auto gcs = get_compress_string("../test_files/f3.Z");
+    auto gc_string = get_uncompress_string("../test_files/f3.Z");
+    auto kernel = GCKernel(s, gcs);
+    ASSERT_EQ(kernel::dp_lcs(s, gc_string), kernel.lcs);
+}
+
+TEST(GrammarCompressedTest, CompressLcsNoMatchIsCorrectTest) {
+    std::string s = "qwerty";
+    auto gcs = get_compress_string("../test_files/f3.Z");
+    auto gc_string = get_uncompress_string("../test_files/f3.Z");
+    auto kernel = GCKernel(s, gcs);
+    ASSERT_EQ(kernel::dp_lcs(s, gc_string), kernel.lcs);
+}
+
 }  // namespace
 }  // namespace gc
 }  // namespace LCS

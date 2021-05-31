@@ -322,8 +322,6 @@ int main() {
     // test_unix_compress(generate_random_alpha_string(16), "../test_files/t8.Z", 1);
     // test_unix_compress(generate_random_alpha_string(64), "../test_files/t8.Z", 1);
     // test_unix_compress(generate_random_alpha_string(256), "../test_files/t8.Z", 1);
-    return 0;
-
 
     // test_aa(generate_random_abc_string(30), 8388608, 0);
     // test_aa(generate_random_abc_string(30), 1ll * 536870000, 0);
@@ -336,16 +334,16 @@ int main() {
     //     test_graph(16, i, 20, 0);
     // }
 
-    std::ifstream t("../test_files/rand_large");
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    std::string all = buffer.str();
+    // std::ifstream t("../test_files/rand_large");
+    // std::stringstream buffer;
+    // buffer << t.rdbuf();
+    // std::string all = buffer.str();
 
-    std::cerr << all.size() << '\n';
-    for (unsigned int i = 100000; 20 * i < all.size(); i += 300000) {
-        std::string ith = all.substr(0, 20 * i);
-        test_bad_graph_lz78(16, ith, 0);
-    }
+    // // std::cerr << all.size() << '\n';
+    // for (unsigned int i = 100000; 20 * i < all.size(); i += 300000) {
+    //     std::string ith = all.substr(0, 20 * i);
+    //     test_bad_graph_lz78(16, ith, 0);
+    // }
 
     return 0;
 }
