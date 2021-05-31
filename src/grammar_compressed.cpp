@@ -394,6 +394,7 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
 
     for (unsigned int i = 0; i < ASCII_SIZE; ++i) {
         gcs_index.push_back(gcs.rules.size());
+        // std::cerr << "size check " << i + 1 << ' ' << gcs.rules.size() << '\n';
         gcs.add_rule(GrammarCompressed(gcs, i + 1, i));
         // std::cout << "RULE" << i + 1 << "  ( actual " << gcs.rules.size() - 1  << ") \n";
         
@@ -505,7 +506,7 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
             
             // Add to dict: prefix step to prev
             if (rule_num[prev]) {
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, rule_num[prev], suffix[fend]));
+                gcs.add_rule(GrammarCompressed(gcs, gcs.rules.size() + 1, rule_num[prev], suffix[fend]));
                 gcs_index.back() += 1;
             } else {
                 rule_num[fend] = suffix[fend];
@@ -514,15 +515,15 @@ GrammarCompressedStorage get_compress_string(const std::string &file_name) {
             // Add to answer: backtracking from code prefixwise
              if (prf != 0 && rule_num[prf] != 0) {
              // rule_num[prev] != 0 && rule_num[prev] != 1) {
-              gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend], rule_num[prf]));
+              gcs.add_rule(GrammarCompressed(gcs, gcs.rules.size() + 1, suffix[fend], rule_num[prf]));
             } else {
-                gcs.add_rule(GrammarCompressed(gcs, rule_num[fend] + 1, suffix[fend]));
+                gcs.add_rule(GrammarCompressed(gcs, gcs.rules.size() + 1, suffix[fend]));
             }
             if (add_fin) {
                 // TODO!
 
                 // std::cout << "f to add " << f_to_add << '\n';
-                gcs.add_rule(GrammarCompressed(gcs, gcs_index.back() + 1, rule_num[fend], f_to_add));
+                gcs.add_rule(GrammarCompressed(gcs, gcs.rules.size() + 1, rule_num[fend], f_to_add));
                 // rule_num[fend]++;
                 // gcs_index.back()++;
                 // std::cout << "added phantom rule\n";
